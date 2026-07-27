@@ -23,22 +23,32 @@ const app = express();
 // --- Security middleware ---
 app.use(helmet());
 
-// Allow any localhost origin in development, strict CLIENT_URL in production
-const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+// Allow any localhost origin in development, plus all Vercel deployment URLs
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://asritha-self.vercel.app',
+];
+const vercelPreviewPattern = /^https:\/\/asritha-.*-asritha6863-6286s-projects\.vercel\.app$/;
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (curl, Postman, mobile apps)
+      // Allow requests with no origin (curl, Postman, server-to-server)
       if (!origin) return callback(null, true);
-      // In development, allow any localhost port
+      // Exact match against allowed list
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Pattern match for Vercel preview deployments
+      if (vercelPreviewPattern.test(origin)) return callback(null, true);
+      // Allow any localhost port in development
       if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin)) {
         return callback(null, true);
       }
-      // In production, restrict to CLIENT_URL
-      if (origin === allowedOrigin) return callback(null, true);
       callback(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(mongoSanitize()); // strips $ and . operators from req.body/query/params
