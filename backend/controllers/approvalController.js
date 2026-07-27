@@ -46,8 +46,9 @@ const path        = require('path');
 const fs          = require('fs');
 const Requirement = require('../models/Requirement');
 const User        = require('../models/User');
-const asyncHandler  = require('../utils/asyncHandler');
-const ErrorResponse = require('../utils/ErrorResponse');
+const asyncHandler    = require('../utils/asyncHandler');
+const ErrorResponse   = require('../utils/ErrorResponse');
+const sendNotification = require('../utils/sendNotification');
 const { ROLES }   = require('../constants/roles');
 
 const DM_THRESHOLD = 500;
@@ -430,6 +431,59 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
   requirement.timeline.push(makeTimeline(req, `Approved by ${req.user.role}`, prev, nextStatus, note));
 
   await requirement.save();
+
+  // ── Send in-app notification to the next actor ────────────────────────────
+  if (nextApprover) {
+    const reqNum = requirement.requirementNumber;
+    const item   = requirement.itemName;
+
+    const NOTIF_MAP = {
+      'Under Review':          { type:'requirement_submitted',    title:`New Request to Review`,           message:`${reqNum} — "${item}" submitted by ${requirement.employeeName}. Awaiting your review.`,          actionUrl:`/review/${requirement._id}` },
+      'Budget Check':          { type:'requirement_approved',     title:`Budget Check Required`,           message:`${reqNum} — "${item}" needs budget verification. Amount: AED ${(requirement.estimatedTotalPrice||0).toLocaleString()}.`, actionUrl:`/review/${requirement._id}` },
+      'MD Review':             { type:'requirement_approved',     title:`Executive Approval Required`,     message:`${reqNum} — "${item}" requires your MD approval. Amount: AED ${(requirement.estimatedTotalPrice||0).toLocaleString()}.`, actionUrl:`/review/${requirement._id}` },
+      'Director Review':       { type:'requirement_approved',     title:`Director Sign-Off Required`,      message:`${reqNum} — "${item}" needs your approval to proceed to the quotation stage.`,                      actionUrl:`/review/${requirement._id}` },
+      'Quotation Pending':     { type:'quotation_pending',        title:`Upload Quotations`,               message:`${reqNum} — "${item}" approved. Please collect and upload vendor quotations.`,                       actionUrl:`/review/${requirement._id}/quotations` },
+      'Quotation Review':      { type:'quotation_submitted',      title:`Quotations Ready for Review`,     message:`${reqNum} — "${item}" — SE has uploaded quotations. Please review.`,                                actionUrl:`/review/${requirement._id}` },
+      'Director Review2':      { type:'quotation_approved',       title:`Quotations Approved — Review Required`, message:`${reqNum} — "${item}" — DM has reviewed quotations. Your final approval needed.`,            actionUrl:`/review/${requirement._id}` },
+      'PO Pending':            { type:'po_pending',               title:`Prepare Purchase Order`,          message:`${reqNum} — "${item}" — Quotations approved by Dept Head. Please prepare and upload the PO.`,       actionUrl:`/review/${requirement._id}/po` },
+      'PO Review':             { type:'po_submitted',             title:`Purchase Order Ready for Review`, message:`${reqNum} — "${item}" — SE uploaded the PO. Please review before forwarding for signature.`,         actionUrl:`/review/${requirement._id}` },
+      'PO Sign':               { type:'po_review',                title:`Sign Purchase Order`,             message:`${reqNum} — "${item}" — DM approved the PO. Download, sign, and upload the signed version.`,        actionUrl:`/review/${requirement._id}/po-sign` },
+      'PO Signed':             { type:'po_signed',                title:`Email Signed PO to Supplier`,    message:`${reqNum} — "${item}" — Dept Head signed the PO. Please email it to the supplier and confirm.`,       actionUrl:`/review/${requirement._id}` },
+      'GRN Pending':           { type:'grn_pending',              title:`Create Goods Receipt Note`,       message:`${reqNum} — "${item}" — PO sent to supplier. Prepare GRN once goods are received.`,                  actionUrl:`/review/${requirement._id}/grn` },
+      'GRN Review':            { type:'grn_submitted',            title:`GRN Ready for Review`,            message:`${reqNum} — "${item}" — SE submitted the GRN. Please review.`,                                       actionUrl:`/review/${requirement._id}` },
+      'GRN Review2':           { type:'grn_submitted',            title:`GRN Awaiting Final Approval`,     message:`${reqNum} — "${item}" — DM reviewed the GRN. Your final approval needed.`,                           actionUrl:`/review/${requirement._id}` },
+      'Payment Pending':       { type:'grn_approved',             title:`Submit Payment Documents`,        message:`${reqNum} — "${item}" — GRN approved. Upload supplier invoice and submit for 3-way matching.`,        actionUrl:`/review/${requirement._id}/invoice` },
+      'Payment Verification':  { type:'payment_verification',     title:`3-Way Matching Required`,         message:`${reqNum} — "${item}" — SE submitted PO + GRN + Invoice. Please verify for payment approval.`,        actionUrl:`/review/${requirement._id}` },
+      'Completed':             { type:'process_completed',        title:`Procurement Complete ✅`,         message:`${reqNum} — "${item}" — 3-way match passed. Invoice approved for payment. Process complete!`,          actionUrl:`/review/${requirement._id}` },
+    };
+
+    const notif = NOTIF_MAP[nextStatus];
+    if (notif) {
+      await sendNotification({
+        recipient:         nextApprover._id,
+        type:              notif.type,
+        title:             notif.title,
+        message:           notif.message,
+        requirement:       requirement._id,
+        requirementNumber: reqNum,
+        actionUrl:         notif.actionUrl,
+      });
+    }
+  }
+
+  // Also notify the requesting employee on final completion
+  if (nextStatus === 'Completed') {
+    await sendNotification({
+      recipient:         requirement.employee,
+      type:              'process_completed',
+      title:             'Your Purchase Request is Complete ✅',
+      message:           `${requirement.requirementNumber} — "${requirement.itemName}" — procurement process complete. Invoice approved for payment.`,
+      requirement:       requirement._id,
+      requirementNumber: requirement.requirementNumber,
+      actionUrl:         `/requirements/${requirement._id}`,
+    });
+  }
+
   res.status(200).json({ success: true, message: successMsg, requirement });
 });
 
@@ -453,6 +507,14 @@ exports.rejectRequirement = asyncHandler(async (req, res, next) => {
   requirement.timeline.push(makeTimeline(req, `Rejected by ${req.user.role}`, prev, 'Rejected', req.body.note));
 
   await requirement.save();
+  // Notify requesting employee on rejection
+  await sendNotification({
+    recipient: requirement.employee, type: 'requirement_rejected',
+    title: 'Your Request was Rejected',
+    message: `${requirement.requirementNumber} — "${requirement.itemName}" was rejected by ${req.user.role}. Reason: ${req.body.note}`,
+    requirement: requirement._id, requirementNumber: requirement.requirementNumber,
+    actionUrl: `/requirements/${requirement._id}`,
+  });
   res.status(200).json({ success: true, message: 'Requirement rejected.', requirement });
 });
 
@@ -476,6 +538,14 @@ exports.returnRequirement = asyncHandler(async (req, res, next) => {
   requirement.timeline.push(makeTimeline(req, `Returned by ${req.user.role}`, prev, 'Returned', req.body.note));
 
   await requirement.save();
+  // Notify requesting employee on return
+  await sendNotification({
+    recipient: requirement.employee, type: 'requirement_returned',
+    title: 'Your Request was Returned for Correction',
+    message: `${requirement.requirementNumber} — "${requirement.itemName}" was returned by ${req.user.role}. Reason: ${req.body.note}`,
+    requirement: requirement._id, requirementNumber: requirement.requirementNumber,
+    actionUrl: `/requirements/${requirement._id}`,
+  });
   res.status(200).json({ success: true, message: 'Requirement returned for correction.', requirement });
 });
 
@@ -519,8 +589,7 @@ exports.uploadQuotations = asyncHandler(async (req, res, next) => {
   requirement.timeline.push(makeTimeline(req, 'Quotations Uploaded', requirement.status, requirement.status,
     `${added.length} quotation file(s) uploaded by SE.`));
   await requirement.save();
-  res.status(200).json({ success: true, message: `${added.length} quotation(s) uploaded.`, quotations: requirement.quotations });
-});
+  res.status(200).json({ success: true, message: `${added.length} quotation(s) uploaded.`, quotations: requirement.quotations });});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DELETE /api/approval/requirements/:id/quotations/:qId  (SE only)
