@@ -805,3 +805,137 @@ exports.threeWayReject = asyncHandler(async (req, res, next) => {
   await requirement.save();
   res.status(200).json({ success: true, message: 'Three-way match failed. Requirement returned.', requirement });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/approval/requirements/:id/save-quotation-comparison  (SE only)
+// Saves Q1/Q2/Q3 comparison data + optional PDF file per quote
+// Status must be "Quotation Pending"
+// ─────────────────────────────────────────────────────────────────────────────
+exports.saveQuotationComparison = asyncHandler(async (req, res, next) => {
+  const requirement = await Requirement.findById(req.params.id);
+  if (!requirement) return next(new ErrorResponse('Requirement not found', 404));
+  if (requirement.status !== 'Quotation Pending')
+    return next(new ErrorResponse(`Quotation comparison can only be saved when status is "Quotation Pending". Current: "${requirement.status}"`, 400));
+  if (req.user.role !== ROLES.SENIOR_EMPLOYEE)
+    return next(new ErrorResponse('Only Senior Employee can save quotation comparison', 403));
+
+  // Parse JSON body fields (sent as FormData strings)
+  let comparison = {};
+  try {
+    comparison = typeof req.body.comparison === 'string'
+      ? JSON.parse(req.body.comparison)
+      : req.body.comparison || {};
+  } catch {
+    return next(new ErrorResponse('Invalid comparison data format', 400));
+  }
+
+  // Map uploaded files: field names q1File, q2File, q3File
+  const fileMap = {};
+  if (req.files && Array.isArray(req.files)) {
+    req.files.forEach(f => { fileMap[f.fieldname] = f; });
+  }
+
+  const buildQuote = (key, data) => {
+    const q = {
+      vendorName:    data.vendorName    || '',
+      vendorContact: data.vendorContact || '',
+      unitPrice:     Number(data.unitPrice)    || 0,
+      totalPrice:    Number(data.totalPrice)   || 0,
+      deliveryDays:  Number(data.deliveryDays) || 0,
+      paymentTerms:  data.paymentTerms  || '',
+      warranty:      data.warranty      || '',
+      remarks:       data.remarks       || '',
+    };
+    const fileField = `${key}File`;
+    if (fileMap[fileField]) {
+      const f = fileMap[fileField];
+      q.quotationFile = {
+        fileName: f.filename, originalName: f.originalname,
+        mimeType: f.mimetype, size: f.size,
+        path: `uploads/requirements/${f.filename}`,
+        uploadedBy: req.user._id,
+      };
+    } else if (requirement.quotationComparison?.[key]?.quotationFile) {
+      // Keep existing file if not replaced
+      q.quotationFile = requirement.quotationComparison[key].quotationFile;
+    }
+    return q;
+  };
+
+  requirement.quotationComparison = {
+    preparedBy:           `${req.user.firstName} ${req.user.lastName}`,
+    preparedDate:         new Date(),
+    q1:                   buildQuote('q1', comparison.q1 || {}),
+    q2:                   buildQuote('q2', comparison.q2 || {}),
+    q3:                   buildQuote('q3', comparison.q3 || {}),
+    recommendedVendor:    comparison.recommendedVendor    || '',
+    recommendationReason: comparison.recommendationReason || '',
+  };
+  requirement.markModified('quotationComparison');
+  requirement.updatedBy = req.user._id;
+  requirement.timeline.push(makeTimeline(req, 'Quotation Comparison Saved', requirement.status, requirement.status,
+    `Quotation comparison table saved by SE. Recommended: ${comparison.recommendedVendor || 'Not set'}`));
+  await requirement.save();
+  res.status(200).json({ success: true, message: 'Quotation comparison saved.', quotationComparison: requirement.quotationComparison });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/approval/requirements/:id/save-po-details  (SE only)
+// Saves structured PO form data — no file upload, generates formatted PO on frontend
+// Status must be "PO Pending"
+// ─────────────────────────────────────────────────────────────────────────────
+exports.savePoDetails = asyncHandler(async (req, res, next) => {
+  const requirement = await Requirement.findById(req.params.id);
+  if (!requirement) return next(new ErrorResponse('Requirement not found', 404));
+  if (requirement.status !== 'PO Pending')
+    return next(new ErrorResponse(`PO details can only be saved when status is "PO Pending". Current: "${requirement.status}"`, 400));
+  if (req.user.role !== ROLES.SENIOR_EMPLOYEE)
+    return next(new ErrorResponse('Only Senior Employee can save PO details', 403));
+
+  const d = req.body;
+
+  // Calculate line item totals
+  const items = (d.items || []).map(item => ({
+    description: item.description || '',
+    quantity:    Number(item.quantity)  || 0,
+    unit:        item.unit || '',
+    unitPrice:   Number(item.unitPrice) || 0,
+    totalPrice:  +(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toFixed(2),
+  }));
+
+  const subtotal    = +items.reduce((s, i) => s + i.totalPrice, 0).toFixed(2);
+  const vatPercent  = Number(d.vatPercent) || 0;
+  const vat         = +(subtotal * vatPercent / 100).toFixed(2);
+  const grandTotal  = +(subtotal + vat).toFixed(2);
+
+  requirement.poDetails = {
+    poNumber:          d.poNumber          || `PO-${requirement.requirementNumber}`,
+    poDate:            d.poDate ? new Date(d.poDate) : new Date(),
+    toName:            d.toName            || '',
+    toAddress:         d.toAddress         || '',
+    toContact:         d.toContact         || '',
+    toEmail:           d.toEmail           || '',
+    fromName:          d.fromName          || requirement.departmentName,
+    fromAddress:       d.fromAddress       || '',
+    subjectRef:        d.subjectRef        || requirement.itemName,
+    items,
+    subtotal,
+    vat,
+    vatPercent,
+    grandTotal,
+    currency:          d.currency          || 'AED',
+    paymentTerms:      d.paymentTerms      || '',
+    deliveryTerms:     d.deliveryTerms     || '',
+    deliveryLocation:  d.deliveryLocation  || requirement.deliveryLocation,
+    warrantyTerms:     d.warrantyTerms     || '',
+    specialConditions: d.specialConditions || '',
+    authorizedBy:      d.authorizedBy      || `${req.user.firstName} ${req.user.lastName}`,
+    authorizedTitle:   d.authorizedTitle   || req.user.role,
+  };
+  requirement.markModified('poDetails');
+  requirement.updatedBy = req.user._id;
+  requirement.timeline.push(makeTimeline(req, 'PO Details Saved', requirement.status, requirement.status,
+    `PO details saved by SE. PO#: ${requirement.poDetails.poNumber}, Total: ${d.currency || 'AED'} ${grandTotal.toLocaleString()}`));
+  await requirement.save();
+  res.status(200).json({ success: true, message: 'PO details saved.', poDetails: requirement.poDetails });
+});

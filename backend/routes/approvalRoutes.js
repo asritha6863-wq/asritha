@@ -21,6 +21,8 @@ const {
   uploadInvoice,
   recordSupplierEmail,
   threeWayReject,
+  saveQuotationComparison,
+  savePoDetails,
 } = require('../controllers/approvalController');
 
 const APPROVER_ROLES = [
@@ -70,7 +72,13 @@ router.post('/requirements/:id/upload-grn',            idVal, validate, handleUp
 // Supplier Invoice upload (SE)
 router.post('/requirements/:id/upload-invoice',        idVal, validate, handleUpload, uploadInvoice);
 
+// Quotation comparison (SE saves Q1/Q2/Q3 metadata + optional PDF per quote)
+router.post('/requirements/:id/save-quotation-comparison', idVal, validate, handleUpload, saveQuotationComparison);
+
+// Structured PO details (SE enters form fields — no file upload)
+router.post('/requirements/:id/save-po-details',           idVal, validate, savePoDetails);
+
 // Three-way match rejection (Accountant)
-router.post('/requirements/:id/three-way-reject',      idVal, noteReq, validate, threeWayReject);
+router.post('/requirements/:id/three-way-reject',          idVal, noteReq, validate, threeWayReject);
 
 module.exports = router;

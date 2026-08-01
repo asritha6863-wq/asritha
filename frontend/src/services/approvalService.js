@@ -65,6 +65,22 @@ const approvalService = {
     });
   },
 
+  // ── Quotation comparison (SE saves Q1/Q2/Q3 metadata + optional PDF per quote)
+  saveQuotationComparison: (id, comparison, q1File, q2File, q3File) => {
+    const fd = new FormData();
+    fd.append('comparison', JSON.stringify(comparison));
+    if (q1File) fd.append('q1File', q1File);
+    if (q2File) fd.append('q2File', q2File);
+    if (q3File) fd.append('q3File', q3File);
+    return api.post(`/approval/requirements/${id}/save-quotation-comparison`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  // ── Structured PO details (SE enters form fields — no file upload) ────────
+  savePoDetails: (id, poData) =>
+    api.post(`/approval/requirements/${id}/save-po-details`, poData),
+
   // ── Accountant: 3-way match failure ──────────────────────────────────────
   threeWayReject: (id, payload) =>
     api.post(`/approval/requirements/${id}/three-way-reject`, payload),

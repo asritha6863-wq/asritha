@@ -90,15 +90,88 @@ const RequirementSchema = new mongoose.Schema({
   // Quotations — uploaded by SE after Director/Dept Head approval
   quotations: [AttachmentSchema],
 
+  // Quotation Comparison — SE fills in Q1/Q2/Q3 structured data for comparison
+  quotationComparison: {
+    preparedBy:   { type: String },
+    preparedDate: { type: Date },
+    q1: {
+      vendorName:    { type: String, trim: true },
+      vendorContact: { type: String, trim: true },
+      unitPrice:     { type: Number, min: 0 },
+      totalPrice:    { type: Number, min: 0 },
+      deliveryDays:  { type: Number, min: 0 },
+      paymentTerms:  { type: String, trim: true },
+      warranty:      { type: String, trim: true },
+      remarks:       { type: String, trim: true },
+      quotationFile: AttachmentSchema,
+    },
+    q2: {
+      vendorName:    { type: String, trim: true },
+      vendorContact: { type: String, trim: true },
+      unitPrice:     { type: Number, min: 0 },
+      totalPrice:    { type: Number, min: 0 },
+      deliveryDays:  { type: Number, min: 0 },
+      paymentTerms:  { type: String, trim: true },
+      warranty:      { type: String, trim: true },
+      remarks:       { type: String, trim: true },
+      quotationFile: AttachmentSchema,
+    },
+    q3: {
+      vendorName:    { type: String, trim: true },
+      vendorContact: { type: String, trim: true },
+      unitPrice:     { type: Number, min: 0 },
+      totalPrice:    { type: Number, min: 0 },
+      deliveryDays:  { type: Number, min: 0 },
+      paymentTerms:  { type: String, trim: true },
+      warranty:      { type: String, trim: true },
+      remarks:       { type: String, trim: true },
+      quotationFile: AttachmentSchema,
+    },
+    recommendedVendor: { type: String, enum: ['Q1', 'Q2', 'Q3', ''], default: '' },
+    recommendationReason: { type: String, trim: true, maxlength: 1000 },
+  },
+
   // Purchase Order — prepared by SE and signed by Dept Head (uploaded back)
   purchaseOrder: {
     document:       AttachmentSchema,          // SE uploads original PO document
     signedDocument: AttachmentSchema,          // Dept Head uploads signed PO
-    signedAt:       { type: Date },            // timestamp of Dept Head upload/confirm
+    signedAt:       { type: Date },
     signedBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     signedByName:   { type: String },
     supplierEmail:  { type: String, trim: true },
-    sentAt:         { type: Date },            // when SE emailed supplier
+    sentAt:         { type: Date },
+  },
+
+  // Structured PO details — entered by SE to generate formatted PO
+  poDetails: {
+    poNumber:          { type: String, trim: true },
+    poDate:            { type: Date },
+    toName:            { type: String, trim: true },       // vendor/supplier name
+    toAddress:         { type: String, trim: true },
+    toContact:         { type: String, trim: true },
+    toEmail:           { type: String, trim: true },
+    fromName:          { type: String, trim: true },       // company/department name
+    fromAddress:       { type: String, trim: true },
+    subjectRef:        { type: String, trim: true },       // subject line / reference
+    items: [{
+      description:   { type: String, trim: true },
+      quantity:      { type: Number, min: 0 },
+      unit:          { type: String, trim: true },
+      unitPrice:     { type: Number, min: 0 },
+      totalPrice:    { type: Number, min: 0 },
+    }],
+    subtotal:          { type: Number, min: 0 },
+    vat:               { type: Number, min: 0, default: 0 },
+    vatPercent:        { type: Number, min: 0, default: 0 },
+    grandTotal:        { type: Number, min: 0 },
+    currency:          { type: String, default: 'AED' },
+    paymentTerms:      { type: String, trim: true },
+    deliveryTerms:     { type: String, trim: true },
+    deliveryLocation:  { type: String, trim: true },
+    warrantyTerms:     { type: String, trim: true },
+    specialConditions: { type: String, trim: true },
+    authorizedBy:      { type: String, trim: true },
+    authorizedTitle:   { type: String, trim: true },
   },
 
   // Goods Receipt Note — created by SE after delivery

@@ -35,7 +35,8 @@ const upload = multer({
 });
 
 const handleUpload = (req, res, next) => {
-  upload.array('files', 10)(req, res, (err) => {
+  // supports both array 'files' and named fields like q1File/q2File/q3File
+  upload.any()(req, res, (err) => {
     if (!err) return next();
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') return next(new ErrorResponse('File size exceeds 20 MB limit.', 400));
