@@ -9,6 +9,7 @@ import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
 import { toast } from '../../components/requirements/Toast';
+import NotificationWidget from '../../components/common/NotificationWidget';
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PIE_COLORS = {
@@ -481,6 +482,8 @@ const AccountantDashboard = () => {
           loading={actionLoading}
         />
       )}
+
+      <NotificationWidget />
     </div>
   );
 };

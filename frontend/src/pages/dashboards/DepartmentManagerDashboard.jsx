@@ -7,6 +7,7 @@ import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
 import ActionModal from '../../components/approval/ActionModal';
 import { toast } from '../../components/requirements/Toast';
+import NotificationWidget from '../../components/common/NotificationWidget';
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const BUDGET_THRESHOLD = 500;
@@ -320,6 +321,8 @@ const DepartmentManagerDashboard = () => {
       {modal && (
         <ActionModal type={modal.type} requirement={modal.req} onConfirm={handleAction} onClose={()=>setModal(null)} loading={actionLoading} userRole={user?.role} />
       )}
+
+      <NotificationWidget />
     </div>
   );
 };

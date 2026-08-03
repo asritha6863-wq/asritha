@@ -165,21 +165,37 @@ const QuotationUpload = () => {
 
   const handleSubmit = async () => {
     if (!recommended) { toast.error('Please select the recommended vendor before submitting.'); return; }
+    if (!q1.vendorName && !q2.vendorName && !q3.vendorName) {
+      toast.error('Please fill in at least one quotation (Q1, Q2, or Q3) before submitting.');
+      return;
+    }
+
+    // Step 1: save comparison data (includes any pending file uploads)
     setSaving(true);
     try {
       const comparison = { q1, q2, q3, recommendedVendor: recommended, recommendationReason };
       await approvalService.saveQuotationComparison(id, comparison, q1File, q2File, q3File);
       setQ1File(null); setQ2File(null); setQ3File(null);
-      await load();
-    } catch (err) { toast.error(err.message || 'Save failed'); setSaving(false); return; }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to save comparison');
+      setSaving(false);
+      return;
+    }
     setSaving(false);
+
+    // Step 2: submit (approve) — backend will now find the saved comparison data
     setSubmitting(true);
     try {
       await approvalService.approve(id, `Quotations compared. Recommended: ${recommended} — ${recommendationReason || 'See comparison table'}`);
       toast.success('✅ Quotations submitted to Department Manager for review!');
       navigate('/review/queue');
-    } catch (err) { toast.error(err.message || 'Submit failed'); }
-    finally { setSubmitting(false); }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Submit failed');
+      // Reload so user can retry submit without losing their data
+      await load();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return (

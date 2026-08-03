@@ -290,8 +290,12 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
 
   // ── SE: quotations submitted → DM review ─────────────────────────────────
   else if (req.user.role === ROLES.SENIOR_EMPLOYEE && prev === 'Quotation Pending') {
-    if (!requirement.quotations || requirement.quotations.length === 0) {
-      return next(new ErrorResponse('Upload at least one quotation before submitting.', 400));
+    // Accept either old-style quotations[] OR new quotationComparison with at least one vendor filled
+    const hasOldQuotations = requirement.quotations && requirement.quotations.length > 0;
+    const qc = requirement.quotationComparison;
+    const hasComparisonData = qc && (qc.q1?.vendorName || qc.q2?.vendorName || qc.q3?.vendorName);
+    if (!hasOldQuotations && !hasComparisonData) {
+      return next(new ErrorResponse('Please fill in at least one quotation (Q1/Q2/Q3) before submitting.', 400));
     }
     nextStatus       = 'Quotation Review';
     nextApprover     = await findInDept(ROLES.DEPARTMENT_MANAGER, requirement.department);
@@ -318,10 +322,13 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
     note             = `Quotations approved by Dept Head — SE to upload PO. ${note}`.trim();
   }
 
-  // ── SE: PO doc uploaded → DM reviews PO ──────────────────────────────────
+  // ── SE: PO doc uploaded OR poDetails saved → DM reviews PO ─────────────
   else if (req.user.role === ROLES.SENIOR_EMPLOYEE && prev === 'PO Pending') {
-    if (!requirement.purchaseOrder || !requirement.purchaseOrder.document) {
-      return next(new ErrorResponse('Upload the Purchase Order document before submitting.', 400));
+    // Allow either a file upload OR structured poDetails (form-based PO builder)
+    const hasFile    = requirement.purchaseOrder && requirement.purchaseOrder.document;
+    const hasDetails = requirement.poDetails && requirement.poDetails.poNumber;
+    if (!hasFile && !hasDetails) {
+      return next(new ErrorResponse('Please prepare the Purchase Order (fill in PO details or upload a document) before submitting.', 400));
     }
     nextStatus       = 'PO Review';
     nextApprover     = await findInDept(ROLES.DEPARTMENT_MANAGER, requirement.department);

@@ -10,6 +10,7 @@ import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
 import ActionModal from '../../components/approval/ActionModal';
 import { toast } from '../../components/requirements/Toast';
+import NotificationWidget from '../../components/common/NotificationWidget';
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PIE_COLORS = { Submitted:'#2563eb', 'Under Review':'#f59e0b', Approved:'#10b981', Rejected:'#ef4444', Returned:'#f97316', Completed:'#8b5cf6', Draft:'#94a3b8' };
@@ -343,15 +344,11 @@ const SeniorEmployeeDashboard = () => {
 
       {/* Action Modal */}
       {modal && (
-        <ActionModal
-          type={modal.type}
-          requirement={modal.req}
-          onConfirm={handleAction}
-          onClose={() => setModal(null)}
-          loading={actionLoading}
-          userRole={user?.role}
-        />
+        <ActionModal type={modal.type} requirement={modal.req} onConfirm={handleAction}
+          onClose={() => setModal(null)} loading={actionLoading} userRole={user?.role} />
       )}
+
+      <NotificationWidget />
     </div>
   );
 };

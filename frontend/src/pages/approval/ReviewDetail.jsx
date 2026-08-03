@@ -230,12 +230,16 @@ const ReviewDetail = () => {
   const statusIsFinal     = FINAL_STATUSES.includes(req.status);
   const statusIsActive    = ACTIVE_STATUSES.includes(req.status);
 
-  // Dedicated upload pages for complex SE stages
+  // Dedicated upload pages for SE stages
   const seStagePage = {
     'PO Pending':      `/review/${id}/po`,
     'GRN Pending':     `/review/${id}/grn`,
     'Payment Pending': `/review/${id}/invoice`,
   }[req.status];
+
+  // DD dedicated page for signing PO
+  const ddSignPage = (user?.role === 'Department Director' && req.status === 'PO Sign')
+    ? `/review/${id}/po-sign` : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -263,7 +267,14 @@ const ReviewDetail = () => {
               {req.status === 'GRN Pending' ? '📦 Upload GRN' : req.status === 'PO Pending' ? '🛒 Upload PO' : '💳 Upload Invoice'}
             </button>
           )}
-          {canAct && !seStagePage && (
+          {/* DD: PO Sign dedicated page */}
+          {ddSignPage && (
+            <button onClick={() => navigate(ddSignPage)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 transition-colors">
+              ✍️ Sign PO
+            </button>
+          )}
+          {canAct && !seStagePage && !ddSignPage && (
             <>
               <button onClick={() => setModal('return')} className="inline-flex items-center gap-1.5 rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-100 transition-colors">↩ Return</button>
               <button onClick={() => setModal('reject')} className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors">✕ Reject</button>
@@ -284,27 +295,59 @@ const ReviewDetail = () => {
         </div>
       )}
 
-      {/* SE: navigate to dedicated upload pages for GRN/Invoice */}
+      {/* SE: navigate to dedicated upload pages */}
       {canAct && seStagePage && (
-        <div className={`rounded-xl border px-5 py-4 flex items-center justify-between gap-4 ${req.status === 'GRN Pending' ? 'border-orange-300 bg-orange-50' : 'border-purple-300 bg-purple-50'}`}>
+        <div className={`rounded-xl border px-5 py-4 flex items-center justify-between gap-4
+          ${req.status === 'GRN Pending'     ? 'border-orange-300 bg-orange-50' :
+            req.status === 'PO Pending'      ? 'border-sky-300 bg-sky-50' :
+                                               'border-purple-300 bg-purple-50'}`}>
           <div className="flex items-start gap-3">
-            <span className="text-2xl">{req.status === 'GRN Pending' ? '📦' : '💳'}</span>
+            <span className="text-2xl">
+              {req.status === 'GRN Pending' ? '📦' : req.status === 'PO Pending' ? '🛒' : '💳'}
+            </span>
             <div>
-              <p className={`text-sm font-bold ${req.status === 'GRN Pending' ? 'text-orange-800' : req.status === 'PO Pending' ? 'text-sky-800' : 'text-purple-800'}`}>
-                {req.status === 'GRN Pending' ? 'Upload Goods Receipt Note' : req.status === 'PO Pending' ? 'Upload Purchase Order' : 'Upload Supplier Invoice'}
+              <p className={`text-sm font-bold
+                ${req.status === 'GRN Pending' ? 'text-orange-800' : req.status === 'PO Pending' ? 'text-sky-800' : 'text-purple-800'}`}>
+                {req.status === 'GRN Pending' ? 'Upload Goods Receipt Note'
+                  : req.status === 'PO Pending' ? 'Upload Purchase Order for DM Review'
+                  : 'Upload Supplier Invoice'}
               </p>
-              <p className={`text-xs mt-0.5 ${req.status === 'GRN Pending' ? 'text-orange-700' : req.status === 'PO Pending' ? 'text-sky-700' : 'text-purple-700'}`}>
+              <p className={`text-xs mt-0.5
+                ${req.status === 'GRN Pending' ? 'text-orange-700' : req.status === 'PO Pending' ? 'text-sky-700' : 'text-purple-700'}`}>
                 {req.status === 'GRN Pending'
-                  ? 'Goods have been received. Prepare and upload the GRN, fill in delivery details, then submit to the Department Manager.'
+                  ? 'Goods received. Prepare GRN, fill delivery details, and submit to Dept Manager.'
                   : req.status === 'PO Pending'
-                  ? 'Dept Head approved quotations. Upload the PO document, then submit to the Department Manager for review.'
-                  : 'GRN approved. Upload the supplier invoice and submit to the Senior Accountant for three-way matching.'}
+                  ? 'Dept Head approved quotations. Prepare the PO document, upload, then submit to DM for review.'
+                  : 'GRN approved. Upload the supplier invoice and submit to the Senior Accountant for 3-way matching.'}
               </p>
             </div>
           </div>
           <button onClick={() => navigate(seStagePage)}
-            className={`shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white ${req.status === 'GRN Pending' ? 'bg-orange-600 hover:bg-orange-700' : req.status === 'PO Pending' ? 'bg-sky-600 hover:bg-sky-700' : 'bg-purple-600 hover:bg-purple-700'}`}>
+            className={`shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white
+              ${req.status === 'GRN Pending' ? 'bg-orange-600 hover:bg-orange-700'
+                : req.status === 'PO Pending' ? 'bg-sky-600 hover:bg-sky-700'
+                : 'bg-purple-600 hover:bg-purple-700'}`}>
             Go to Upload →
+          </button>
+        </div>
+      )}
+
+      {/* DD: navigate to PO Sign upload page */}
+      {ddSignPage && (
+        <div className="rounded-xl border border-violet-300 bg-violet-50 px-5 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">✍️</span>
+            <div>
+              <p className="text-sm font-bold text-violet-800">Sign the Purchase Order</p>
+              <p className="text-xs text-violet-700 mt-0.5">
+                Download the PO, sign it offline, upload the signed version, then confirm.
+                The Senior Employee will email the signed PO to the supplier.
+              </p>
+            </div>
+          </div>
+          <button onClick={() => navigate(ddSignPage)}
+            className="shrink-0 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700">
+            ✍️ Sign PO →
           </button>
         </div>
       )}

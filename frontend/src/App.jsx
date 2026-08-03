@@ -12,6 +12,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 
 // General
 import Profile from './pages/Profile';
+import Notifications from './pages/Notifications';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 
@@ -64,6 +65,7 @@ function App() {
           <Route path="/" element={<DashboardRedirect />} />
           <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/notifications" element={<Notifications />} />
 
           {/* Role dashboards */}
           <Route path="/dashboard/requesting-employee" element={<RequestingEmployeeDashboard />} />

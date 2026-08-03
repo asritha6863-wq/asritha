@@ -7,6 +7,7 @@ import PriorityBadge from '../../components/requirements/PriorityBadge';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import ActionModal from '../../components/approval/ActionModal';
 import { toast } from '../../components/requirements/Toast';
+import NotificationWidget from '../../components/common/NotificationWidget';
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PIE_COLORS = { 'Director Review':'#6366f1','Budget Check':'#8b5cf6','MD Review':'#e11d48',
@@ -304,7 +305,11 @@ const DepartmentDirectorDashboard = () => {
         </ol>
       </div>
 
-      {modal && <ActionModal type={modal.type} requirement={modal.req} onConfirm={handleAction} onClose={()=>setModal(null)} loading={actionLoading} userRole={user?.role}/>}
+      {modal && (
+        <ActionModal type={modal.type} requirement={modal.req} onConfirm={handleAction} onClose={()=>setModal(null)} loading={actionLoading} userRole={user?.role}/>
+      )}
+
+      <NotificationWidget />
     </div>
   );
 };

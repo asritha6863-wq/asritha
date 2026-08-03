@@ -24,108 +24,116 @@ const Field = ({ label, required, children }) => (
   </div>
 );
 
-// ── Printable PO View ─────────────────────────────────────────────────────────
+// ── Printable PO View (inline styles only — renders correctly in print window) ─
 const POPrintView = ({ po, req }) => (
-  <div id="po-print-area" className="bg-white p-10 text-slate-900 font-sans text-sm" style={{ minWidth: 700 }}>
+  <div id="po-print-area" style={{ fontFamily: 'Arial, sans-serif', fontSize: 13, color: '#1e293b', background: '#fff', padding: 40, minWidth: 680 }}>
+
     {/* Letterhead */}
-    <div className="flex items-start justify-between border-b-2 border-navy-800 pb-4 mb-6">
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1e3a5f', paddingBottom: 16, marginBottom: 24 }}>
       <div>
-        <p className="text-xl font-bold text-navy-800">{po.fromName || req.departmentName}</p>
-        {po.fromAddress && <p className="text-xs text-slate-500 mt-0.5 whitespace-pre-line">{po.fromAddress}</p>}
+        <p style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', margin: 0 }}>{po.fromName || req?.departmentName}</p>
+        {po.fromAddress && <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0', whiteSpace: 'pre-line' }}>{po.fromAddress}</p>}
       </div>
-      <div className="text-right">
-        <p className="text-2xl font-bold text-navy-700">PURCHASE ORDER</p>
-        <p className="text-sm font-semibold text-slate-600 mt-1">PO No: {po.poNumber}</p>
-        <p className="text-xs text-slate-500">Date: {po.poDate ? new Date(po.poDate).toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' }) : '—'}</p>
+      <div style={{ textAlign: 'right' }}>
+        <p style={{ fontSize: 22, fontWeight: 700, color: '#1e3a5f', margin: 0, letterSpacing: 1 }}>PURCHASE ORDER</p>
+        <p style={{ fontSize: 13, fontWeight: 600, color: '#475569', margin: '4px 0 0' }}>PO No: <strong>{po.poNumber || '—'}</strong></p>
+        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0' }}>Date: {po.poDate ? new Date(po.poDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}</p>
       </div>
     </div>
 
-    {/* To / Subject */}
-    <div className="grid grid-cols-2 gap-6 mb-6">
-      <div className="rounded-lg border border-slate-200 p-4">
-        <p className="text-xs font-bold uppercase text-slate-400 mb-2">Vendor / Supplier</p>
-        <p className="font-semibold">{po.toName || '—'}</p>
-        {po.toAddress  && <p className="text-xs text-slate-500 mt-0.5 whitespace-pre-line">{po.toAddress}</p>}
-        {po.toContact  && <p className="text-xs text-slate-500">Tel: {po.toContact}</p>}
-        {po.toEmail    && <p className="text-xs text-slate-500">Email: {po.toEmail}</p>}
+    {/* To / Reference */}
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 14 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: 1, margin: '0 0 8px' }}>Vendor / Supplier</p>
+        <p style={{ fontWeight: 600, margin: '0 0 4px' }}>{po.toName || '—'}</p>
+        {po.toAddress  && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0', whiteSpace: 'pre-line' }}>{po.toAddress}</p>}
+        {po.toContact  && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Tel: {po.toContact}</p>}
+        {po.toEmail    && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Email: {po.toEmail}</p>}
       </div>
-      <div className="rounded-lg border border-slate-200 p-4">
-        <p className="text-xs font-bold uppercase text-slate-400 mb-2">Reference</p>
-        <p className="font-semibold">{po.subjectRef || req.itemName}</p>
-        <p className="text-xs text-slate-500 mt-1">Req #: {req.requirementNumber}</p>
-        <p className="text-xs text-slate-500">Dept: {req.departmentName}</p>
-        {po.deliveryLocation && <p className="text-xs text-slate-500">Deliver to: {po.deliveryLocation}</p>}
+      <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 14 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: 1, margin: '0 0 8px' }}>Reference</p>
+        <p style={{ fontWeight: 600, margin: '0 0 4px' }}>{po.subjectRef || req?.itemName || '—'}</p>
+        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Req #: {req?.requirementNumber}</p>
+        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Dept: {req?.departmentName}</p>
+        {po.deliveryLocation && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Deliver to: {po.deliveryLocation}</p>}
       </div>
     </div>
 
     {/* Items table */}
-    <table className="w-full mb-6 border-collapse">
+    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20 }}>
       <thead>
-        <tr className="bg-navy-800 text-white">
-          <th className="px-3 py-2 text-left text-xs font-semibold">#</th>
-          <th className="px-3 py-2 text-left text-xs font-semibold">Description</th>
-          <th className="px-3 py-2 text-center text-xs font-semibold">Qty</th>
-          <th className="px-3 py-2 text-center text-xs font-semibold">Unit</th>
-          <th className="px-3 py-2 text-right text-xs font-semibold">Unit Price</th>
-          <th className="px-3 py-2 text-right text-xs font-semibold">Total</th>
+        <tr style={{ background: '#1e3a5f', color: '#fff' }}>
+          {['#', 'Description', 'Qty', 'Unit', 'Unit Price (AED)', 'Total (AED)'].map((h, i) => (
+            <th key={i} style={{ padding: '8px 10px', textAlign: i >= 4 ? 'right' : i === 2 || i === 3 ? 'center' : 'left', fontSize: 11, fontWeight: 600 }}>{h}</th>
+          ))}
         </tr>
       </thead>
       <tbody>
         {(po.items || []).map((item, i) => (
-          <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-            <td className="px-3 py-2 text-xs border-b border-slate-100">{i + 1}</td>
-            <td className="px-3 py-2 text-xs border-b border-slate-100">{item.description}</td>
-            <td className="px-3 py-2 text-xs text-center border-b border-slate-100">{item.quantity}</td>
-            <td className="px-3 py-2 text-xs text-center border-b border-slate-100">{item.unit}</td>
-            <td className="px-3 py-2 text-xs text-right border-b border-slate-100">{fmtAED(item.unitPrice)}</td>
-            <td className="px-3 py-2 text-xs text-right border-b border-slate-100 font-semibold">{fmtAED(item.totalPrice)}</td>
+          <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
+            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>{i + 1}</td>
+            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0' }}>{item.description}</td>
+            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>{item.quantity}</td>
+            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>{item.unit}</td>
+            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>{fmtAED(item.unitPrice)}</td>
+            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'right', fontWeight: 600 }}>{fmtAED((Number(item.quantity)||0)*(Number(item.unitPrice)||0))}</td>
           </tr>
         ))}
       </tbody>
     </table>
 
     {/* Totals */}
-    <div className="flex justify-end mb-6">
-      <div className="w-64 space-y-1">
-        <div className="flex justify-between text-sm"><span className="text-slate-500">Subtotal</span><span className="font-semibold">{fmtAED(po.subtotal)}</span></div>
-        {po.vatPercent > 0 && <div className="flex justify-between text-sm"><span className="text-slate-500">VAT ({po.vatPercent}%)</span><span>{fmtAED(po.vat)}</span></div>}
-        <div className="flex justify-between text-base font-bold border-t border-slate-300 pt-1 mt-1">
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+      <div style={{ width: 260 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 13 }}>
+          <span style={{ color: '#64748b' }}>Subtotal</span>
+          <span style={{ fontWeight: 600 }}>{fmtAED(po.subtotal)}</span>
+        </div>
+        {Number(po.vatPercent) > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}>
+            <span style={{ color: '#64748b' }}>VAT ({po.vatPercent}%)</span>
+            <span>{fmtAED(po.vat)}</span>
+          </div>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 15, fontWeight: 700, borderTop: '2px solid #cbd5e1', marginTop: 6 }}>
           <span>Grand Total ({po.currency || 'AED'})</span>
-          <span className="text-navy-800">{fmtAED(po.grandTotal)}</span>
+          <span style={{ color: '#1e3a5f' }}>{fmtAED(po.grandTotal)}</span>
         </div>
       </div>
     </div>
 
     {/* Terms */}
-    <div className="grid grid-cols-2 gap-4 mb-8 text-xs">
-      {[
-        ['Payment Terms',      po.paymentTerms],
-        ['Delivery Terms',     po.deliveryTerms],
-        ['Warranty',           po.warrantyTerms],
-        ['Special Conditions', po.specialConditions],
-      ].filter(([,v]) => v).map(([l, v]) => (
-        <div key={l} className="rounded-lg border border-slate-200 p-3">
-          <p className="font-bold text-slate-500 uppercase mb-1">{l}</p>
-          <p className="text-slate-700">{v}</p>
-        </div>
-      ))}
-    </div>
+    {[['Payment Terms', po.paymentTerms], ['Delivery Terms', po.deliveryTerms], ['Warranty', po.warrantyTerms], ['Special Conditions', po.specialConditions]].filter(([,v]) => v).length > 0 && (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
+        {[['Payment Terms', po.paymentTerms], ['Delivery Terms', po.deliveryTerms], ['Warranty', po.warrantyTerms], ['Special Conditions', po.specialConditions]]
+          .filter(([, v]) => v)
+          .map(([l, v]) => (
+            <div key={l} style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 12 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: 1, margin: '0 0 4px' }}>{l}</p>
+              <p style={{ fontSize: 12, color: '#334155', margin: 0 }}>{v}</p>
+            </div>
+          ))}
+      </div>
+    )}
 
     {/* Signature */}
-    <div className="grid grid-cols-2 gap-8 mt-8 pt-6 border-t border-slate-200">
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 32, paddingTop: 20, borderTop: '1px solid #e2e8f0' }}>
       <div>
-        <p className="text-xs text-slate-400 mb-6">Authorized Signatory</p>
-        <div className="border-b border-slate-400 mb-1 w-48" />
-        <p className="text-xs font-semibold">{po.authorizedBy || '—'}</p>
-        <p className="text-xs text-slate-500">{po.authorizedTitle || ''}</p>
+        <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 48px' }}>Authorized Signatory</p>
+        <div style={{ borderBottom: '1px solid #94a3b8', width: 180, marginBottom: 6 }} />
+        <p style={{ fontSize: 12, fontWeight: 600, margin: 0 }}>{po.authorizedBy || '—'}</p>
+        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0' }}>{po.authorizedTitle || ''}</p>
       </div>
       <div>
-        <p className="text-xs text-slate-400 mb-6">Vendor Acknowledgement</p>
-        <div className="border-b border-slate-400 mb-1 w-48" />
-        <p className="text-xs text-slate-500">Signature / Stamp</p>
+        <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 48px' }}>Vendor Acknowledgement</p>
+        <div style={{ borderBottom: '1px solid #94a3b8', width: 180, marginBottom: 6 }} />
+        <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>Signature / Stamp</p>
       </div>
     </div>
-    <p className="text-xs text-slate-400 text-center mt-6">This is a computer-generated Purchase Order — {po.fromName || req.departmentName}</p>
+
+    <p style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', marginTop: 24 }}>
+      This is a computer-generated Purchase Order — {po.fromName || req?.departmentName}
+    </p>
   </div>
 );
 
@@ -243,28 +251,31 @@ const POUpload = () => {
 
   const handlePrint = () => {
     const el = document.getElementById('po-print-area');
-    if (!el) return;
+    if (!el) {
+      toast.error('Please click "Save & Preview PO" first to generate the PO view.');
+      return;
+    }
     const w = window.open('', '_blank');
-    w.document.write(`
-      <html><head><title>Purchase Order — ${po.poNumber}</title>
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #1e293b; margin: 0; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #1e3a5f; color: white; padding: 8px; text-align: left; font-size: 11px; }
-        td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
-        .right { text-align: right; } .center { text-align: center; }
-        .totals { display: flex; justify-content: flex-end; margin-bottom: 24px; }
-        .totals-box { width: 260px; }
-        .totals-row { display: flex; justify-content: space-between; padding: 4px 0; }
-        .grand { font-weight: bold; font-size: 14px; border-top: 2px solid #cbd5e1; padding-top: 6px; }
-        .sig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
-        .sig-line { border-bottom: 1px solid #94a3b8; width: 180px; margin-bottom: 4px; margin-top: 40px; }
-        @media print { body { padding: 0; } }
-      </style></head><body>${el.innerHTML}</body></html>
-    `);
+    if (!w) { toast.error('Pop-up blocked. Please allow pop-ups for this site.'); return; }
+    w.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase Order — ${po.poNumber || req?.requirementNumber}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #1e293b; background: #fff; }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>${el.outerHTML}</body>
+</html>`);
     w.document.close();
     w.focus();
-    setTimeout(() => { w.print(); w.close(); }, 300);
+    setTimeout(() => { w.print(); }, 500);
   };
 
   if (loading) return (

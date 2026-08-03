@@ -8,6 +8,7 @@ import useAuth from '../../hooks/useAuth';
 import requirementService from '../../services/requirementService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
+import NotificationWidget from '../../components/common/NotificationWidget';
 
 // ── Icons (inline SVG) ────────────────────────────────────────────────────────
 const Icon = ({ d, className }) => (
@@ -293,6 +294,8 @@ const RequestingEmployeeDashboard = () => {
           </div>
         )}
       </div>
+
+      <NotificationWidget />
     </div>
   );
 };
