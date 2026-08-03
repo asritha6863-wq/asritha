@@ -89,7 +89,7 @@ const getBudgetBanner = (role, canAct, total, reqStatus) => {
       'Payment Pending':   { icon:'💳', border:'border-purple-200 bg-purple-50',titleColor:'text-purple-800', descColor:'text-purple-700', title:'Submit PO + GRN + Invoice to Senior Accountant',  desc:'Upload supplier invoice then submit for 3-way matching.' },
     },
     'Department Manager': {
-      'Quotation Review': { icon:'📋', border:'border-teal-200 bg-teal-50',     titleColor:'text-teal-800',   descColor:'text-teal-700',   title:'Approve Quotations — Forward to Dept Head',       desc:'Review quotations and forward to Dept Head for quotation approval.' },
+      'Quotation Review': { icon:'📋', border:'border-teal-200 bg-teal-50',     titleColor:'text-teal-800',   descColor:'text-teal-700',   title:'Review Quotation Comparison — Forward to Dept Head',       desc:'The SE has compared 3 vendor quotations. Review the Q1/Q2/Q3 comparison table below with the SE\'s recommended vendor, then approve to forward to Dept Head.' },
       'PO Review':        { icon:'🛒', border:'border-blue-200 bg-blue-50',     titleColor:'text-blue-800',   descColor:'text-blue-700',   title:'Review PO — Forward to Dept Head to Sign',        desc:'Verify PO document and forward to Dept Head for signature.' },
       'GRN Review':       { icon:'📦', border:'border-amber-200 bg-amber-50',   titleColor:'text-amber-800',  descColor:'text-amber-700',  title:'Review GRN — Forward to Dept Head',               desc:'Verify receipt and forward to Dept Head for final GRN approval.' },
     },
@@ -443,7 +443,7 @@ const ReviewDetail = () => {
           </Section>
 
           {/* ── Quotation Comparison Table (visible from Quotation Review onwards) ── */}
-          {req.quotationComparison?.preparedBy && (
+          {(req.quotationComparison?.preparedBy || ['Quotation Review','Director Review2','PO Pending','PO Review','PO Sign','PO Signed','GRN Pending','GRN Review','GRN Review2','Payment Pending','Payment Verification','Completed'].includes(req.status)) && req.quotationComparison && (
             <Section title="Quotation Comparison">
               <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
                 <div>
