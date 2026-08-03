@@ -442,6 +442,97 @@ const ReviewDetail = () => {
             )}
           </Section>
 
+          {/* ── Quotation Comparison Table (visible from Quotation Review onwards) ── */}
+          {req.quotationComparison?.preparedBy && (
+            <Section title="Quotation Comparison">
+              <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <p className="text-xs text-slate-500">
+                    Prepared by <span className="font-semibold">{req.quotationComparison.preparedBy}</span>
+                    {req.quotationComparison.preparedDate && ` · ${new Date(req.quotationComparison.preparedDate).toLocaleString()}`}
+                  </p>
+                </div>
+                {req.quotationComparison.recommendedVendor && (
+                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                    ✅ Recommended: {req.quotationComparison.recommendedVendor}
+                    {req.quotationComparison[req.quotationComparison.recommendedVendor.toLowerCase()]?.vendorName
+                      ? ` — ${req.quotationComparison[req.quotationComparison.recommendedVendor.toLowerCase()].vendorName}`
+                      : ''}
+                  </span>
+                )}
+              </div>
+
+              {/* Comparison table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100">
+                      <th className="border border-slate-200 px-3 py-2 text-left font-semibold text-slate-600">Criteria</th>
+                      {['q1','q2','q3'].map(k => {
+                        const q = req.quotationComparison[k];
+                        const isRec = req.quotationComparison.recommendedVendor?.toLowerCase() === k;
+                        return (
+                          <th key={k} className={`border border-slate-200 px-3 py-2 text-left font-semibold ${isRec ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600'}`}>
+                            {k.toUpperCase()} {isRec && '✅'}
+                            {q?.vendorName && <div className="font-normal text-xs mt-0.5">{q.vendorName}</div>}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { label: 'Unit Price (AED)',   key: 'unitPrice',    fmt: v => v ? `AED ${Number(v).toLocaleString()}` : '—' },
+                      { label: 'Total Price (AED)',  key: 'totalPrice',   fmt: v => v ? `AED ${Number(v).toLocaleString()}` : '—' },
+                      { label: 'Delivery Days',      key: 'deliveryDays', fmt: v => v ? `${v} days` : '—' },
+                      { label: 'Payment Terms',      key: 'paymentTerms', fmt: v => v || '—' },
+                      { label: 'Warranty',           key: 'warranty',     fmt: v => v || '—' },
+                      { label: 'Remarks',            key: 'remarks',      fmt: v => v || '—' },
+                    ].map(row => (
+                      <tr key={row.label} className="hover:bg-slate-50">
+                        <td className="border border-slate-200 px-3 py-2 font-semibold text-slate-600 bg-slate-50">{row.label}</td>
+                        {['q1','q2','q3'].map(k => {
+                          const q = req.quotationComparison[k];
+                          const isRec = req.quotationComparison.recommendedVendor?.toLowerCase() === k;
+                          const val = q ? row.fmt(q[row.key]) : '—';
+                          return (
+                            <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50/50 font-semibold text-emerald-800' : 'text-slate-700'}`}>
+                              {val}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                    {/* Document links row */}
+                    <tr className="hover:bg-slate-50">
+                      <td className="border border-slate-200 px-3 py-2 font-semibold text-slate-600 bg-slate-50">Quotation Doc</td>
+                      {['q1','q2','q3'].map(k => {
+                        const q = req.quotationComparison[k];
+                        const isRec = req.quotationComparison.recommendedVendor?.toLowerCase() === k;
+                        return (
+                          <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50/50' : ''}`}>
+                            {q?.quotationFile
+                              ? <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer" download className="text-navy-600 hover:underline font-medium">📄 View</a>
+                              : <span className="text-slate-400">—</span>
+                            }
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Recommendation reason */}
+              {req.quotationComparison.recommendationReason && (
+                <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-emerald-700 mb-1">Reason for Recommendation</p>
+                  <p className="text-sm text-emerald-800">{req.quotationComparison.recommendationReason}</p>
+                </div>
+              )}
+            </Section>
+          )}
+
           {/* ── Quotations (SE upload zone + DM/DD view) ─────────────────── */}
           {(isSEQuotPending || isDMQuotReview || isDDQuotApproval || (req.quotations && req.quotations.length > 0)) && (
             <Section title={`Quotations (${req.quotations?.length || 0})`}>

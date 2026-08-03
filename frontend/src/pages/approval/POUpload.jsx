@@ -567,34 +567,65 @@ const POUpload = () => {
 
           {/* Terms */}
           <div className="card p-6 space-y-4">
-            <h3 className="border-b border-slate-200 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Terms & Conditions</h3>
+            <h3 className="border-b border-slate-200 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Terms &amp; Conditions</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {[
-                ['paymentTerms',      'Payment Terms',      'e.g. 30 days net from invoice date'],
-                ['deliveryTerms',     'Delivery Terms',     'e.g. DDP — Delivered Duty Paid'],
-                ['warrantyTerms',     'Warranty Terms',     'e.g. 1 year on-site warranty'],
-                ['specialConditions', 'Special Conditions', 'Any additional conditions or notes...'],
-              ].map(([key, label, placeholder]) => (
-                <Field key={key} label={label}>
-                  <textarea rows={2} readOnly={!canEdit} className="input-field w-full resize-none text-sm"
-                    placeholder={placeholder} value={po[key]} onChange={e => set(key, e.target.value)} />
-                </Field>
-              ))}
+              <Field label="Grand Total in Words">
+                <input type="text" className="input-field w-full sm:col-span-2" readOnly={!canEdit}
+                  placeholder="e.g. One Thousand Five Hundred only"
+                  value={po.grandTotalWords} onChange={e => set('grandTotalWords', e.target.value)} />
+              </Field>
+              <Field label="Payment Terms">
+                <textarea rows={2} readOnly={!canEdit} className="input-field w-full resize-none text-sm"
+                  placeholder="e.g. 60% advance, 30% at delivery, 10% at installation"
+                  value={po.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} />
+              </Field>
+              <Field label="Delivery Terms">
+                <input type="text" readOnly={!canEdit} className="input-field w-full text-sm"
+                  placeholder="e.g. CIF" value={po.deliveryTerms} onChange={e => set('deliveryTerms', e.target.value)} />
+              </Field>
+              <Field label="Warranty Terms">
+                <input type="text" readOnly={!canEdit} className="input-field w-full text-sm"
+                  placeholder="e.g. 1 year on-site warranty" value={po.warrantyTerms} onChange={e => set('warrantyTerms', e.target.value)} />
+              </Field>
+              <Field label="Billing &amp; Shipping Address">
+                <textarea rows={2} readOnly={!canEdit} className="input-field w-full resize-none text-sm"
+                  placeholder="Full billing and shipping address"
+                  value={po.billingAddress} onChange={e => set('billingAddress', e.target.value)} />
+              </Field>
+              <Field label="Special Conditions">
+                <textarea rows={2} readOnly={!canEdit} className="input-field w-full resize-none text-sm sm:col-span-2"
+                  placeholder="Any additional conditions or notes..."
+                  value={po.specialConditions} onChange={e => set('specialConditions', e.target.value)} />
+              </Field>
             </div>
           </div>
 
           {/* Authorization */}
           <div className="card p-6 space-y-4">
-            <h3 className="border-b border-slate-200 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Prepared & Authorized By</h3>
+            <h3 className="border-b border-slate-200 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Authorized Signatories</h3>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Name">
-                <input type="text" className="input-field w-full" readOnly={!canEdit}
-                  value={po.authorizedBy} onChange={e => set('authorizedBy', e.target.value)} />
-              </Field>
-              <Field label="Title / Designation">
-                <input type="text" className="input-field w-full" readOnly={!canEdit}
-                  value={po.authorizedTitle} onChange={e => set('authorizedTitle', e.target.value)} />
-              </Field>
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-slate-500">Signatory 1</p>
+                <Field label="Name">
+                  <input type="text" className="input-field w-full" readOnly={!canEdit}
+                    value={po.authorizedBy} onChange={e => set('authorizedBy', e.target.value)} />
+                </Field>
+                <Field label="Designation / Title">
+                  <input type="text" className="input-field w-full" readOnly={!canEdit}
+                    value={po.authorizedTitle} onChange={e => set('authorizedTitle', e.target.value)} />
+                </Field>
+              </div>
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-slate-500">Signatory 2</p>
+                <Field label="Name">
+                  <input type="text" className="input-field w-full" readOnly={!canEdit}
+                    value={po.authorizedBy2} onChange={e => set('authorizedBy2', e.target.value)} />
+                </Field>
+                <Field label="Designation / Title">
+                  <input type="text" className="input-field w-full" readOnly={!canEdit}
+                    value={po.authorizedTitle2} onChange={e => set('authorizedTitle2', e.target.value)} />
+                </Field>
+              </div>
             </div>
           </div>
         </>
