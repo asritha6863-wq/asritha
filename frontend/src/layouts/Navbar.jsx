@@ -63,7 +63,7 @@ const Navbar = ({ onMenuClick }) => {
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '';
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-pink-100 bg-white px-4 sm:px-6">
       {/* Mobile menu button */}
       <button
         className="rounded-md p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
@@ -96,7 +96,7 @@ const Navbar = ({ onMenuClick }) => {
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-100"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-navy-700 text-sm font-semibold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-600 text-sm font-semibold text-white">
               {initials || '—'}
             </div>
             <div className="hidden text-left sm:block">

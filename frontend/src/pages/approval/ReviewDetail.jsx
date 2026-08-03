@@ -8,6 +8,7 @@ import ActionModal from '../../components/approval/ActionModal';
 import { toast } from '../../components/requirements/Toast';
 import useAuth from '../../hooks/useAuth';
 import Button from '../../components/common/Button';
+import { printPO } from '../../utils/printPO';
 
 // AED thresholds — must match backend
 const DM_THRESHOLD = 500;
@@ -632,9 +633,15 @@ const ReviewDetail = () => {
                 <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-blue-200">
                     <p className="text-xs font-semibold text-blue-700">🛒 Structured Purchase Order — Prepared by SE</p>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="text-blue-600 font-semibold">PO# {req.poDetails.poNumber}</span>
-                      <span className="text-blue-500">{req.poDetails.poDate ? new Date(req.poDetails.poDate).toLocaleDateString() : ''}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-blue-600 font-semibold">PO# {req.poDetails.poNumber}</span>
+                      <span className="text-xs text-blue-500">{req.poDetails.poDate ? new Date(req.poDetails.poDate).toLocaleDateString() : ''}</span>
+                      <button
+                        onClick={() => printPO(req.poDetails, req)}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-navy-700 px-3 py-1 text-xs font-semibold text-white hover:bg-navy-800 transition-colors"
+                      >
+                        🖨️ Print / Download PDF
+                      </button>
                     </div>
                   </div>
                   <div className="p-4 space-y-3">

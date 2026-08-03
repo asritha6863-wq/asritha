@@ -1,10 +1,11 @@
 /**
  * POSignUpload.jsx
- * Dept Head (Department Director) workflow for PO Sign stage:
- *  1. Download the original PO document prepared by SE
- *  2. Sign it offline (print+scan, DocuSign, PDF editor, etc.)
- *  3. Upload the signed version back
- *  4. Click "Confirm & Send to SE" → status moves to PO Signed → SE emails supplier
+ * Dept Head workflow for PO Sign stage:
+ *  1. View the auto-generated PO from SE's form data
+ *  2. Print/Download it as PDF
+ *  3. Sign it offline (print+scan, DocuSign, PDF editor, etc.)
+ *  4. Upload the signed version back
+ *  5. Click "Confirm & Send to SE"
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -12,6 +13,7 @@ import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import { toast } from '../../components/requirements/Toast';
 import Button from '../../components/common/Button';
+import { printPO } from '../../utils/printPO';
 
 const ALLOWED_EXTS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
 const MAX_SIZE = 20 * 1024 * 1024;
@@ -125,12 +127,11 @@ const POSignUpload = () => {
         <div className="rounded-xl border border-violet-300 bg-violet-50 px-5 py-4 flex items-start gap-3">
           <span className="text-2xl">✍️</span>
           <div>
-            <p className="text-sm font-bold text-violet-800">Sign & Return Purchase Order</p>
+            <p className="text-sm font-bold text-violet-800">Sign &amp; Return Purchase Order</p>
             <p className="text-xs text-violet-700 mt-1 leading-relaxed">
-              <strong>Step 1:</strong> Download the original PO below.<br/>
-              <strong>Step 2:</strong> Sign it (print &amp; scan, PDF editor, DocuSign, etc.).<br/>
-              <strong>Step 3:</strong> Upload the signed version here.<br/>
-              <strong>Step 4:</strong> Click <strong>"Confirm &amp; Send to SE"</strong> — the Senior Employee will email it to the supplier.
+              <strong>Step 1:</strong> Print the auto-generated PO below as PDF and sign it.<br/>
+              <strong>Step 2:</strong> Upload the signed version here.<br/>
+              <strong>Step 3:</strong> Click <strong>"Confirm &amp; Send to SE"</strong> — SE will email it to the supplier.
             </p>
           </div>
         </div>
@@ -140,46 +141,67 @@ const POSignUpload = () => {
         </div>
       )}
 
-      {/* Requirement summary */}
+      {/* Step 1 — Auto-generated PO Preview + Print */}
       <div className="card p-6">
-        <h3 className="mb-4 border-b border-slate-200 pb-2 text-sm font-semibold uppercase tracking-wider text-slate-500">Requirement Summary</h3>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Info label="Item"             value={req.itemName} />
-          <Info label="Category"         value={req.category} />
-          <Info label="Quantity"         value={`${req.quantity} ${req.unit}`} />
-          <Info label="Est. Total"       value={`AED ${(req.estimatedTotalPrice || 0).toLocaleString()}`} />
-          <Info label="Requested By"     value={req.employeeName} />
-          <Info label="Department"       value={req.departmentName} />
-          <Info label="Delivery Location" value={req.deliveryLocation} />
-          <Info label="Required By"      value={req.requiredDate ? new Date(req.requiredDate).toLocaleDateString() : '—'} />
+        <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+            Step 1 — Review &amp; Print Purchase Order
+          </h3>
+          <button
+            onClick={() => req.poDetails ? printPO(req.poDetails, req) : toast.error('PO details not found. SE must fill in PO form first.')}
+            className="inline-flex items-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 transition-colors"
+          >
+            🖨️ Print / Download PDF
+          </button>
         </div>
-      </div>
 
-      {/* Step 1 — Download original PO */}
-      <div className="card p-6">
-        <h3 className="mb-4 border-b border-slate-200 pb-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
-          Step 1 — Download Original Purchase Order
-        </h3>
-        {originalPO ? (
-          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📄</span>
-              <div>
-                <p className="text-sm font-semibold text-slate-800">{originalPO.originalName}</p>
-                <p className="text-xs text-slate-500">{fmt(originalPO.size)} · Prepared by SE</p>
-              </div>
+        {req.poDetails?.poNumber ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+            {/* PO summary preview */}
+            <div className="grid grid-cols-2 gap-4 p-4 text-xs sm:grid-cols-4">
+              <div><p className="text-slate-400">PO Number</p><p className="font-bold text-slate-800">{req.poDetails.poNumber}</p></div>
+              <div><p className="text-slate-400">Date</p><p className="font-bold text-slate-800">{req.poDetails.poDate ? new Date(req.poDetails.poDate).toLocaleDateString() : '—'}</p></div>
+              <div><p className="text-slate-400">Vendor</p><p className="font-bold text-slate-800">{req.poDetails.toName || '—'}</p></div>
+              <div><p className="text-slate-400">Grand Total</p><p className="font-bold text-navy-700">AED {(req.poDetails.grandTotal || 0).toLocaleString()}</p></div>
             </div>
-            <a
-              href={`${baseUrl}/${originalPO.path}`}
-              target="_blank" rel="noreferrer" download
-              className="inline-flex items-center gap-1.5 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 transition-colors"
-            >
-              ⬇️ Download PO
-            </a>
+            <div className="overflow-x-auto border-t border-slate-200">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-navy-700 text-white">
+                    <th className="px-3 py-2 text-left">#</th>
+                    <th className="px-3 py-2 text-left">Description</th>
+                    <th className="px-3 py-2 text-center">Qty</th>
+                    <th className="px-3 py-2 text-right">Unit Price</th>
+                    <th className="px-3 py-2 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(req.poDetails.items || []).map((item, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                      <td className="px-3 py-1.5 border-b border-slate-100">{i+1}</td>
+                      <td className="px-3 py-1.5 border-b border-slate-100">{item.description}</td>
+                      <td className="px-3 py-1.5 border-b border-slate-100 text-center">{item.quantity} {item.unit}</td>
+                      <td className="px-3 py-1.5 border-b border-slate-100 text-right">AED {Number(item.unitPrice||0).toLocaleString()}</td>
+                      <td className="px-3 py-1.5 border-b border-slate-100 text-right font-semibold">AED {Number(item.totalPrice||0).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-navy-50">
+                    <td colSpan={4} className="px-3 py-2 text-right font-bold text-sm">Grand Total</td>
+                    <td className="px-3 py-2 text-right font-bold text-sm text-navy-700">AED {(req.poDetails.grandTotal||0).toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {/* Terms summary */}
+            <div className="grid grid-cols-2 gap-3 p-4 text-xs border-t border-slate-200 sm:grid-cols-3">
+              {req.poDetails.paymentTerms && <div><span className="text-slate-400">Payment: </span><span className="font-semibold">{req.poDetails.paymentTerms}</span></div>}
+              {req.poDetails.deliveryTerms && <div><span className="text-slate-400">Delivery: </span><span className="font-semibold">{req.poDetails.deliveryTerms}</span></div>}
+              {req.poDetails.warrantyTerms && <div><span className="text-slate-400">Warranty: </span><span className="font-semibold">{req.poDetails.warrantyTerms}</span></div>}
+            </div>
           </div>
         ) : (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            ⚠️ No PO document found. The SE may not have uploaded it yet.
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            ⚠️ The SE has not yet filled in the PO details form. Ask SE to complete the PO form first.
           </div>
         )}
       </div>
@@ -251,17 +273,11 @@ const POSignUpload = () => {
           <div>
             <p className="text-sm font-semibold text-slate-800">Confirm &amp; Send Signed PO to Senior Employee</p>
             <p className="text-xs text-slate-500 mt-0.5">
-              Once confirmed, the SE will be notified to email the signed PO to the supplier.
+              Once confirmed, the SE will be notified to email the PO to the supplier.
+              You can optionally upload the signed copy above.
             </p>
-            {!signedPO && !file && (
-              <p className="text-xs text-red-500 mt-1 font-semibold">⚠️ Upload the signed PO document first.</p>
-            )}
           </div>
-          <Button
-            onClick={handleConfirm}
-            loading={uploading || confirming}
-            disabled={!signedPO && !file}
-          >
+          <Button onClick={handleConfirm} loading={uploading || confirming}>
             ✅ Confirm &amp; Send to SE
           </Button>
         </div>

@@ -1,9 +1,9 @@
 /**
  * POUpload.jsx — PO Form Builder
- * SE enters structured PO details → saves → generates formatted printable PO
- * Status: PO Pending
+ * SE enters structured PO details → saves → auto-generates formatted printable PO PDF
+ * Status: PO Pending — NO file upload needed, poDetails IS the PO
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
@@ -11,6 +11,7 @@ import ActionModal from '../../components/approval/ActionModal';
 import { toast } from '../../components/requirements/Toast';
 import Button from '../../components/common/Button';
 import useAuth from '../../hooks/useAuth';
+import { printPO } from '../../utils/printPO';
 
 const fmtAED = (n) => `AED ${(Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const today  = () => new Date().toISOString().split('T')[0];
@@ -351,32 +352,7 @@ const POUpload = () => {
   };
 
   const handlePrint = () => {
-    const el = document.getElementById('po-print-area');
-    if (!el) {
-      toast.error('Please click "Save & Preview PO" first to generate the PO view.');
-      return;
-    }
-    const w = window.open('', '_blank');
-    if (!w) { toast.error('Pop-up blocked. Please allow pop-ups for this site.'); return; }
-    w.document.write(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Purchase Order — ${po.poNumber || req?.requirementNumber}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #1e293b; background: #fff; }
-    @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
-  </style>
-</head>
-<body>${el.outerHTML}</body>
-</html>`);
-    w.document.close();
-    w.focus();
-    setTimeout(() => { w.print(); }, 500);
+    printPO({ ...po, subtotal, vat: vatAmt, grandTotal }, req);
   };
 
   if (loading) return (
@@ -635,15 +611,24 @@ const POUpload = () => {
       {canEdit && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-slate-800">Save or Submit to Dept Manager</p>
-            <p className="text-xs text-slate-500 mt-0.5">Save to preview the formatted PO, then submit for DM review.</p>
+            <p className="text-sm font-semibold text-slate-800">Save, Preview &amp; Submit to Dept Manager</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Fill in the form → Save → Preview the formatted PO → Print PDF → Submit to DM.
+            </p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => { handleSave(); setTimeout(() => setShowPreview(true), 500); }}
-              disabled={saving}
+          <div className="flex flex-wrap gap-3">
+            <button onClick={handleSave} disabled={saving}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
               {saving && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />}
-              👁 Save & Preview PO
+              💾 Save
+            </button>
+            <button onClick={() => setShowPreview(v => !v)}
+              className="inline-flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
+              👁 {showPreview ? 'Hide Preview' : 'Preview PO'}
+            </button>
+            <button onClick={handlePrint}
+              className="inline-flex items-center gap-2 rounded-lg border border-navy-300 bg-navy-50 px-4 py-2 text-sm font-semibold text-navy-700 hover:bg-navy-100">
+              🖨️ Print / PDF
             </button>
             <Button onClick={() => setModal(true)} disabled={saving}>
               📤 Submit PO to DM

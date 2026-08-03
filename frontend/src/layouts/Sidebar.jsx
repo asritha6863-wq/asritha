@@ -23,7 +23,7 @@ const ICONS = {
 
 const linkBase = 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors';
 const linkClasses = ({ isActive }) =>
-  `${linkBase} ${isActive ? 'bg-navy-700 text-white' : 'text-slate-300 hover:bg-navy-800 hover:text-white'}`;
+  `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`;
 
 const SectionLabel = ({ children }) => (
   <p className="mt-5 mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -51,14 +51,14 @@ const Sidebar = ({ open, onClose }) => {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-navy-900 px-4 py-6 transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-pink-900 px-4 py-6 transition-transform lg:static lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Logo */}
         <div className="mb-8 flex items-center gap-2.5 px-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-500">
-            <span className="font-display text-lg font-extrabold text-navy-900">E</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-100">
+            <span className="font-display text-lg font-extrabold text-pink-700">E</span>
           </div>
           <div>
             <p className="font-display text-sm font-bold text-white leading-tight">ERP Procurement</p>
@@ -85,11 +85,11 @@ const Sidebar = ({ open, onClose }) => {
                 <Ico d={ICONS.list} className="h-5 w-5" />
                 My Requirements
               </NavLink>
-              <NavLink to="/requirements?status=Draft" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-navy-700 text-white' : 'text-slate-300 hover:bg-navy-800 hover:text-white'}`}>
+              <NavLink to="/requirements?status=Draft" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`}>
                 <Ico d={ICONS.draft} className="h-5 w-5" />
                 Drafts
               </NavLink>
-              <NavLink to="/requirements?status=Submitted" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-navy-700 text-white' : 'text-slate-300 hover:bg-navy-800 hover:text-white'}`}>
+              <NavLink to="/requirements?status=Submitted" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`}>
                 <Ico d={ICONS.clock} className="h-5 w-5" />
                 Pending Requests
               </NavLink>
@@ -110,7 +110,7 @@ const Sidebar = ({ open, onClose }) => {
                 Review Queue
               </NavLink>
               <SectionLabel>Documents</SectionLabel>
-              <NavLink to="/review/queue" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-navy-700 text-white' : 'text-slate-300 hover:bg-navy-800 hover:text-white'}`}>
+              <NavLink to="/review/queue" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`}>
                 <Ico d={ICONS.draft} className="h-5 w-5" />
                 Upload Quotations
               </NavLink>
@@ -224,7 +224,7 @@ const Sidebar = ({ open, onClose }) => {
           </NavLink>
         </nav>
 
-        <div className="mt-6 rounded-lg bg-navy-800 px-3 py-3 text-xs text-slate-400">
+        <div className="mt-6 rounded-lg bg-pink-800 px-3 py-3 text-xs text-pink-200">
           {isRE  ? 'Create and track your purchase requests. Returned items can be edited and resubmitted.'
             : isSE ? 'Review Queue → Quotations → PO upload → confirm sent → GRN → Invoice submission.'
             : isDM ? 'Budget ≤ AED 500 → direct to quotation stage. Budget > AED 500 → Budget Controller.'

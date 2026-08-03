@@ -348,8 +348,11 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
 
   // ── Dept Head: confirm signed PO uploaded → SE emails supplier ───────────
   else if (req.user.role === ROLES.DEPARTMENT_DIRECTOR && prev === 'PO Sign') {
-    if (!requirement.purchaseOrder?.signedDocument) {
-      return next(new ErrorResponse('Please upload the signed Purchase Order document before confirming.', 400));
+    // Accept either: uploaded signed document OR just approving after reviewing auto-generated PO
+    const hasSignedDoc = requirement.purchaseOrder?.signedDocument;
+    const hasPoDetails = requirement.poDetails?.poNumber;
+    if (!hasSignedDoc && !hasPoDetails) {
+      return next(new ErrorResponse('Please review the PO before confirming.', 400));
     }
     nextStatus       = 'PO Signed';
     nextApprover     = await findInDept(ROLES.SENIOR_EMPLOYEE, requirement.department);
