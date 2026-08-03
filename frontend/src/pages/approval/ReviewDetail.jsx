@@ -448,7 +448,8 @@ const ReviewDetail = () => {
 
           {/* ── Quotation Comparison Table (visible from Quotation Review onwards) ── */}
           {(req.quotationComparison?.preparedBy || ['Quotation Review','Director Review2','PO Pending','PO Review','PO Sign','PO Signed','GRN Pending','GRN Review','GRN Review2','Payment Pending','Payment Verification','Completed'].includes(req.status)) && req.quotationComparison && (
-            <Section title="Quotation Comparison">
+            <Section title="📊 Quotation Comparison (Q1 / Q2 / Q3)">
+              {/* Header row */}
               <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <p className="text-xs text-slate-500">
@@ -471,14 +472,14 @@ const ReviewDetail = () => {
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr className="bg-slate-100">
-                      <th className="border border-slate-200 px-3 py-2 text-left font-semibold text-slate-600">Criteria</th>
+                      <th className="border border-slate-200 px-3 py-2 text-left font-semibold text-slate-600 w-32">Criteria</th>
                       {['q1','q2','q3'].map(k => {
                         const q = req.quotationComparison[k];
                         const isRec = req.quotationComparison.recommendedVendor?.toLowerCase() === k;
                         return (
-                          <th key={k} className={`border border-slate-200 px-3 py-2 text-left font-semibold ${isRec ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600'}`}>
+                          <th key={k} className={`border border-slate-200 px-3 py-2 text-left font-semibold ${isRec ? 'bg-emerald-100 text-emerald-800' : 'text-slate-600'}`}>
                             {k.toUpperCase()} {isRec && '✅'}
-                            {q?.vendorName && <div className="font-normal text-xs mt-0.5">{q.vendorName}</div>}
+                            {q?.vendorName && <div className="font-normal text-xs mt-0.5 text-slate-700">{q.vendorName}</div>}
                           </th>
                         );
                       })}
@@ -486,12 +487,13 @@ const ReviewDetail = () => {
                   </thead>
                   <tbody>
                     {[
-                      { label: 'Unit Price (AED)',   key: 'unitPrice',    fmt: v => v ? `AED ${Number(v).toLocaleString()}` : '—' },
-                      { label: 'Total Price (AED)',  key: 'totalPrice',   fmt: v => v ? `AED ${Number(v).toLocaleString()}` : '—' },
-                      { label: 'Delivery Days',      key: 'deliveryDays', fmt: v => v ? `${v} days` : '—' },
-                      { label: 'Payment Terms',      key: 'paymentTerms', fmt: v => v || '—' },
-                      { label: 'Warranty',           key: 'warranty',     fmt: v => v || '—' },
-                      { label: 'Remarks',            key: 'remarks',      fmt: v => v || '—' },
+                      { label: 'Vendor Contact',  key: 'vendorContact', fmt: v => v || '—' },
+                      { label: 'Unit Price (AED)', key: 'unitPrice',     fmt: v => v ? `AED ${Number(v).toLocaleString()}` : '—' },
+                      { label: 'Total Price (AED)',key: 'totalPrice',    fmt: v => v ? `AED ${Number(v).toLocaleString()}` : '—' },
+                      { label: 'Delivery Days',   key: 'deliveryDays',  fmt: v => v ? `${v} days` : '—' },
+                      { label: 'Payment Terms',   key: 'paymentTerms',  fmt: v => v || '—' },
+                      { label: 'Warranty',        key: 'warranty',      fmt: v => v || '—' },
+                      { label: 'Remarks',         key: 'remarks',       fmt: v => v || '—' },
                     ].map(row => (
                       <tr key={row.label} className="hover:bg-slate-50">
                         <td className="border border-slate-200 px-3 py-2 font-semibold text-slate-600 bg-slate-50">{row.label}</td>
@@ -500,24 +502,27 @@ const ReviewDetail = () => {
                           const isRec = req.quotationComparison.recommendedVendor?.toLowerCase() === k;
                           const val = q ? row.fmt(q[row.key]) : '—';
                           return (
-                            <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50/50 font-semibold text-emerald-800' : 'text-slate-700'}`}>
+                            <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50 font-semibold text-emerald-800' : 'text-slate-700'}`}>
                               {val}
                             </td>
                           );
                         })}
                       </tr>
                     ))}
-                    {/* Document links row */}
-                    <tr className="hover:bg-slate-50">
-                      <td className="border border-slate-200 px-3 py-2 font-semibold text-slate-600 bg-slate-50">Quotation Doc</td>
+                    {/* Supporting document row */}
+                    <tr className="hover:bg-slate-50 bg-blue-50/30">
+                      <td className="border border-slate-200 px-3 py-2 font-semibold text-slate-600 bg-slate-50">📄 Supporting Doc</td>
                       {['q1','q2','q3'].map(k => {
                         const q = req.quotationComparison[k];
                         const isRec = req.quotationComparison.recommendedVendor?.toLowerCase() === k;
                         return (
-                          <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50/50' : ''}`}>
+                          <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50' : ''}`}>
                             {q?.quotationFile
-                              ? <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer" download className="text-navy-600 hover:underline font-medium">📄 View</a>
-                              : <span className="text-slate-400">—</span>
+                              ? <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer" download
+                                  className="inline-flex items-center gap-1 rounded-md bg-navy-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-navy-700">
+                                  📄 View PDF
+                                </a>
+                              : <span className="text-slate-400 text-xs">Not uploaded</span>
                             }
                           </td>
                         );
@@ -529,9 +534,30 @@ const ReviewDetail = () => {
 
               {/* Recommendation reason */}
               {req.quotationComparison.recommendationReason && (
-                <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-                  <p className="text-xs font-semibold text-emerald-700 mb-1">Reason for Recommendation</p>
+                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-emerald-700 mb-1">✅ Reason for Recommendation</p>
                   <p className="text-sm text-emerald-800">{req.quotationComparison.recommendationReason}</p>
+                </div>
+              )}
+
+              {/* Also show any old-style uploaded quotation files */}
+              {req.quotations && req.quotations.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Additional Uploaded Files ({req.quotations.length})</p>
+                  <div className="space-y-2">
+                    {req.quotations.map(q => (
+                      <div key={q._id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-lg">📄</span>
+                          <div>
+                            <p className="text-xs font-medium text-slate-800">{q.originalName}</p>
+                            <p className="text-xs text-slate-400">{fmtSize(q.size)}</p>
+                          </div>
+                        </div>
+                        <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </Section>
@@ -598,8 +624,85 @@ const ReviewDetail = () => {
           )}
 
           {/* ── PO Document (visible from PO Pending onwards) ─────────────── */}
-          {(req.purchaseOrder?.document || isSEPOPending || isDMPOReview || isDDPOSign || isSEPOSigned || ['PO Pending','PO Review','PO Sign','PO Signed'].includes(req.status)) && (
+          {(req.purchaseOrder?.document || req.poDetails?.poNumber || isSEPOPending || isDMPOReview || isDDPOSign || isSEPOSigned || ['PO Pending','PO Review','PO Sign','PO Signed'].includes(req.status)) && (
             <Section title="Purchase Order">
+
+              {/* ── PO Details Preview (form-based, no file) — visible to DM for PO Review ── */}
+              {req.poDetails?.poNumber && (
+                <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-blue-200">
+                    <p className="text-xs font-semibold text-blue-700">🛒 Structured Purchase Order — Prepared by SE</p>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-blue-600 font-semibold">PO# {req.poDetails.poNumber}</span>
+                      <span className="text-blue-500">{req.poDetails.poDate ? new Date(req.poDetails.poDate).toLocaleDateString() : ''}</span>
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {/* To / From */}
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <p className="font-semibold text-slate-500 mb-1">To (Vendor)</p>
+                        <p className="font-semibold text-slate-800">{req.poDetails.toName || '—'}</p>
+                        {req.poDetails.toAddress && <p className="text-slate-500 whitespace-pre-line">{req.poDetails.toAddress}</p>}
+                        {req.poDetails.toContact && <p className="text-slate-500">Tel: {req.poDetails.toContact}</p>}
+                        {req.poDetails.toEmail && <p className="text-slate-500">Email: {req.poDetails.toEmail}</p>}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-500 mb-1">From (Dept)</p>
+                        <p className="font-semibold text-slate-800">{req.poDetails.fromName || req.departmentName}</p>
+                        {req.poDetails.subjectRef && <p className="text-slate-500 mt-1">Sub: {req.poDetails.subjectRef}</p>}
+                        {req.poDetails.quotationRef && <p className="text-slate-500">Ref: {req.poDetails.quotationRef}</p>}
+                      </div>
+                    </div>
+                    {/* Items table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-navy-700 text-white">
+                            {['#','Description','Qty','Unit','Unit Price','Total'].map(h => (
+                              <th key={h} className="px-2 py-1.5 text-left font-semibold">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(req.poDetails.items || []).map((item, i) => (
+                            <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                              <td className="px-2 py-1.5 border border-slate-200">{i+1}</td>
+                              <td className="px-2 py-1.5 border border-slate-200">{item.description}</td>
+                              <td className="px-2 py-1.5 border border-slate-200 text-center">{item.quantity}</td>
+                              <td className="px-2 py-1.5 border border-slate-200 text-center">{item.unit}</td>
+                              <td className="px-2 py-1.5 border border-slate-200 text-right">AED {Number(item.unitPrice||0).toLocaleString()}</td>
+                              <td className="px-2 py-1.5 border border-slate-200 text-right font-semibold">AED {Number(item.totalPrice||0).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                          {Number(req.poDetails.vatPercent) > 0 && (
+                            <tr className="bg-slate-50">
+                              <td colSpan={5} className="px-2 py-1.5 border border-slate-200 text-right text-slate-500">VAT ({req.poDetails.vatPercent}%)</td>
+                              <td className="px-2 py-1.5 border border-slate-200 text-right">AED {Number(req.poDetails.vat||0).toLocaleString()}</td>
+                            </tr>
+                          )}
+                          <tr className="bg-navy-50">
+                            <td colSpan={5} className="px-2 py-1.5 border border-slate-200 text-right font-bold">Grand Total ({req.poDetails.currency || 'AED'})</td>
+                            <td className="px-2 py-1.5 border border-slate-200 text-right font-bold text-navy-700">AED {Number(req.poDetails.grandTotal||0).toLocaleString()}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Terms */}
+                    {(req.poDetails.paymentTerms || req.poDetails.deliveryTerms || req.poDetails.warrantyTerms) && (
+                      <div className="grid grid-cols-3 gap-3 text-xs">
+                        {req.poDetails.paymentTerms && <div><span className="font-semibold text-slate-500">Payment: </span>{req.poDetails.paymentTerms}</div>}
+                        {req.poDetails.deliveryTerms && <div><span className="font-semibold text-slate-500">Delivery: </span>{req.poDetails.deliveryTerms}</div>}
+                        {req.poDetails.warrantyTerms && <div><span className="font-semibold text-slate-500">Warranty: </span>{req.poDetails.warrantyTerms}</div>}
+                      </div>
+                    )}
+                    {/* Authorized by */}
+                    {req.poDetails.authorizedBy && (
+                      <p className="text-xs text-slate-500">Authorized by: <span className="font-semibold text-slate-700">{req.poDetails.authorizedBy}</span>{req.poDetails.authorizedTitle ? ` — ${req.poDetails.authorizedTitle}` : ''}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               {req.purchaseOrder?.document ? (
                 <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 mb-3">
                   <div className="flex items-center gap-2">
