@@ -190,8 +190,12 @@ const ReviewDetail = () => {
   };
 
   const handleQuotUploadAndSubmit = async () => {
-    if (quotFiles.length === 0 && (!req.quotations || req.quotations.length === 0)) {
-      toast.error('Upload at least one quotation before submitting.'); return;
+    // Accept either: old-style file uploads OR new quotation comparison form data
+    const hasOldQuotations = req.quotations && req.quotations.length > 0;
+    const qc = req.quotationComparison;
+    const hasComparisonData = qc && (qc.q1?.vendorName || qc.q2?.vendorName || qc.q3?.vendorName);
+    if (quotFiles.length === 0 && !hasOldQuotations && !hasComparisonData) {
+      toast.error('Please fill in Q1/Q2/Q3 comparison on the quotation page before submitting.'); return;
     }
     if (quotFiles.length > 0) {
       setQuotUploading(true);
