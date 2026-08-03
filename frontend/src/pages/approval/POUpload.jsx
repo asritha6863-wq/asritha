@@ -24,118 +24,210 @@ const Field = ({ label, required, children }) => (
   </div>
 );
 
-// ── Printable PO View (inline styles only — renders correctly in print window) ─
-const POPrintView = ({ po, req }) => (
-  <div id="po-print-area" style={{ fontFamily: 'Arial, sans-serif', fontSize: 13, color: '#1e293b', background: '#fff', padding: 40, minWidth: 680 }}>
+// ── Printable PO View — matches the exact PO format (inline styles for print) ─
+const POPrintView = ({ po, req }) => {
+  const poDate   = po.poDate ? new Date(po.poDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '___________';
+  const dueDate  = po.completionDate ? new Date(po.completionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '[DD-Month-YYYY]';
+  const grandTotalWords = po.grandTotalWords || '';
 
-    {/* Letterhead */}
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1e3a5f', paddingBottom: 16, marginBottom: 24 }}>
-      <div>
-        <p style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', margin: 0 }}>{po.fromName || req?.departmentName}</p>
-        {po.fromAddress && <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0', whiteSpace: 'pre-line' }}>{po.fromAddress}</p>}
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <p style={{ fontSize: 22, fontWeight: 700, color: '#1e3a5f', margin: 0, letterSpacing: 1 }}>PURCHASE ORDER</p>
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#475569', margin: '4px 0 0' }}>PO No: <strong>{po.poNumber || '—'}</strong></p>
-        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0' }}>Date: {po.poDate ? new Date(po.poDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}</p>
-      </div>
-    </div>
+  const S = {
+    page:     { fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 12, color: '#000', background: '#fff', padding: '40px 48px', maxWidth: 740, margin: '0 auto', lineHeight: 1.5 },
+    heading:  { textAlign: 'center', fontSize: 15, fontWeight: 700, textDecoration: 'underline', marginBottom: 16 },
+    topMeta:  { marginBottom: 16, fontSize: 12 },
+    label:    { fontWeight: 700 },
+    toBlock:  { marginBottom: 14 },
+    sub:      { fontWeight: 700, marginBottom: 2, fontSize: 12 },
+    ref:      { marginBottom: 14, fontSize: 12 },
+    body:     { marginBottom: 14, fontSize: 12 },
+    table:    { width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: 12 },
+    th:       { border: '1px solid #000', padding: '6px 8px', background: '#e8e8e8', fontWeight: 700, textAlign: 'left' },
+    thC:      { border: '1px solid #000', padding: '6px 8px', background: '#e8e8e8', fontWeight: 700, textAlign: 'center' },
+    thR:      { border: '1px solid #000', padding: '6px 8px', background: '#e8e8e8', fontWeight: 700, textAlign: 'right' },
+    td:       { border: '1px solid #000', padding: '5px 8px', textAlign: 'left' },
+    tdC:      { border: '1px solid #000', padding: '5px 8px', textAlign: 'center' },
+    tdR:      { border: '1px solid #000', padding: '5px 8px', textAlign: 'right' },
+    tdTotal:  { border: '1px solid #000', padding: '5px 8px', textAlign: 'right', fontWeight: 700 },
+    tcSection:{ marginBottom: 14, fontSize: 12 },
+    tcHead:   { fontWeight: 700, textDecoration: 'underline', marginBottom: 6 },
+    tcRow:    { display: 'flex', gap: 8, marginBottom: 4 },
+    tcKey:    { fontWeight: 700, minWidth: 140 },
+    tcVal:    { flex: 1 },
+    signRow:  { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 20 },
+    sigBox:   { fontSize: 12 },
+    sigLine:  { borderBottom: '1px solid #000', width: 200, margin: '32px 0 4px' },
+    acceptBox:{ marginTop: 32, border: '1px solid #000', padding: '16px 20px', fontSize: 12 },
+    acceptHead:{ textAlign: 'center', fontWeight: 700, textDecoration: 'underline', marginBottom: 12 },
+    fieldLine: { borderBottom: '1px solid #000', display: 'inline-block', minWidth: 180, marginLeft: 8, verticalAlign: 'bottom' },
+  };
 
-    {/* To / Reference */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 14 }}>
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: 1, margin: '0 0 8px' }}>Vendor / Supplier</p>
-        <p style={{ fontWeight: 600, margin: '0 0 4px' }}>{po.toName || '—'}</p>
-        {po.toAddress  && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0', whiteSpace: 'pre-line' }}>{po.toAddress}</p>}
-        {po.toContact  && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Tel: {po.toContact}</p>}
-        {po.toEmail    && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Email: {po.toEmail}</p>}
-      </div>
-      <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 14 }}>
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: 1, margin: '0 0 8px' }}>Reference</p>
-        <p style={{ fontWeight: 600, margin: '0 0 4px' }}>{po.subjectRef || req?.itemName || '—'}</p>
-        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Req #: {req?.requirementNumber}</p>
-        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Dept: {req?.departmentName}</p>
-        {po.deliveryLocation && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0' }}>Deliver to: {po.deliveryLocation}</p>}
-      </div>
-    </div>
+  return (
+    <div id="po-print-area" style={S.page}>
 
-    {/* Items table */}
-    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20 }}>
-      <thead>
-        <tr style={{ background: '#1e3a5f', color: '#fff' }}>
-          {['#', 'Description', 'Qty', 'Unit', 'Unit Price (AED)', 'Total (AED)'].map((h, i) => (
-            <th key={i} style={{ padding: '8px 10px', textAlign: i >= 4 ? 'right' : i === 2 || i === 3 ? 'center' : 'left', fontSize: 11, fontWeight: 600 }}>{h}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {(po.items || []).map((item, i) => (
-          <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
-            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>{i + 1}</td>
-            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0' }}>{item.description}</td>
-            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>{item.quantity}</td>
-            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>{item.unit}</td>
-            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>{fmtAED(item.unitPrice)}</td>
-            <td style={{ padding: '7px 10px', fontSize: 11, borderBottom: '1px solid #e2e8f0', textAlign: 'right', fontWeight: 600 }}>{fmtAED((Number(item.quantity)||0)*(Number(item.unitPrice)||0))}</td>
+      {/* PO Header — Date + No */}
+      <div style={S.topMeta}>
+        <div>Date: <span style={{ borderBottom: '1px solid #000', paddingRight: 60 }}>{poDate}</span></div>
+        <div>No: <span style={{ borderBottom: '1px solid #000', paddingRight: 60 }}>{po.poNumber || '___/___'}</span></div>
+      </div>
+
+      {/* To block */}
+      <div style={S.toBlock}>
+        <p style={{ margin: '0 0 2px' }}>To</p>
+        <p style={{ fontWeight: 700, margin: '0 0 2px' }}>{po.toName || '[Vendor / Company Name]'}</p>
+        {po.toAddress
+          ? po.toAddress.split('\n').map((l, i) => <p key={i} style={{ margin: 0 }}>{l}</p>)
+          : <><p style={{ margin: 0 }}>[Vendor Address Line 1]</p><p style={{ margin: 0 }}>[Vendor Address Line 2, City, State - PIN]</p></>
+        }
+        {po.toContact && <p style={{ margin: 0 }}>Contact: {po.toContact}</p>}
+      </div>
+
+      {/* Sub / Ref */}
+      <p style={S.sub}>
+        Sub: {po.subjectRef || 'Purchase, Delivery, Supply, Erection, Testing and Commissioning Order For [Description of Work/Material] at [Site Location].'}
+      </p>
+      <p style={S.ref}>
+        Ref: Your Quotation No: {po.quotationRef || '[Quotation No.]'} dated: {po.quotationDate || '[Date]'}
+      </p>
+
+      {/* Body text */}
+      <p style={S.body}>
+        With reference to your quotation referred above to {po.siteProject || '[Site/Project Name]'} and subsequent discussions we had with you,
+        we are pleased to place our order on you for the subject with following mutually agreed terms and conditions.
+      </p>
+
+      {/* Items table */}
+      <table style={S.table}>
+        <thead>
+          <tr>
+            <th style={{ ...S.th, width: 40 }}>Sl No</th>
+            <th style={S.th}>Description</th>
+            <th style={{ ...S.thC, width: 70 }}>Qty</th>
+            <th style={{ ...S.thR, width: 110 }}>Amount</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {(po.items || []).map((item, i) => (
+            <tr key={i}>
+              <td style={{ ...S.tdC }}>{i + 1}</td>
+              <td style={S.td}>{item.description || '[Item / Work Description]'}</td>
+              <td style={S.tdC}>{item.quantity} {item.unit}</td>
+              <td style={S.tdR}>{fmtAED((Number(item.quantity)||0) * (Number(item.unitPrice)||0))}</td>
+            </tr>
+          ))}
+          {/* Empty row if only 1 item */}
+          {(po.items || []).length < 2 && (
+            <tr>
+              <td style={S.tdC}>2</td>
+              <td style={S.td}>&nbsp;</td>
+              <td style={S.tdC}>&nbsp;</td>
+              <td style={S.tdR}>&nbsp;</td>
+            </tr>
+          )}
+          {Number(po.vatPercent) > 0 && (
+            <tr>
+              <td colSpan={3} style={{ ...S.td, textAlign: 'right' }}>VAT ({po.vatPercent}%)</td>
+              <td style={S.tdR}>{fmtAED(po.vat)}</td>
+            </tr>
+          )}
+          <tr>
+            <td colSpan={3} style={{ ...S.tdTotal, textAlign: 'right' }}>Total (Including GST)</td>
+            <td style={S.tdTotal}>{fmtAED(po.grandTotal)}</td>
+          </tr>
+        </tbody>
+      </table>
 
-    {/* Totals */}
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
-      <div style={{ width: 260 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 13 }}>
-          <span style={{ color: '#64748b' }}>Subtotal</span>
-          <span style={{ fontWeight: 600 }}>{fmtAED(po.subtotal)}</span>
+      {/* Terms & Conditions */}
+      <div style={S.tcSection}>
+        <p style={S.tcHead}>Terms &amp; Conditions</p>
+
+        <div style={S.tcRow}>
+          <span style={S.tcKey}>Price</span>
+          <span style={S.tcVal}>
+            : The Total price is {po.currency || 'AED'} {fmtAED(po.grandTotal)}{grandTotalWords ? `/ - (${grandTotalWords} only)` : ''}. The price is inclusive of GST.
+          </span>
         </div>
-        {Number(po.vatPercent) > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12 }}>
-            <span style={{ color: '#64748b' }}>VAT ({po.vatPercent}%)</span>
-            <span>{fmtAED(po.vat)}</span>
+
+        <div style={S.tcRow}>
+          <span style={S.tcKey}>Payment<br/>Terms</span>
+          <span style={S.tcVal}>: {po.paymentTerms || '[Payment terms, e.g. 60% advance, 30% at delivery, 10% at installation].'}</span>
+        </div>
+
+        <div style={S.tcRow}>
+          <span style={S.tcKey}>Delivery Terms</span>
+          <span style={S.tcVal}>: {po.deliveryTerms || 'CIF'} {po.deliveryLocation || '[Delivery Location]'}</span>
+        </div>
+
+        <div style={S.tcRow}>
+          <span style={S.tcKey}>Completion Date</span>
+          <span style={S.tcVal}>: {dueDate}</span>
+        </div>
+
+        {po.billingAddress && (
+          <div style={S.tcRow}>
+            <span style={S.tcKey}>Billing &amp; Shipping Address</span>
+            <span style={S.tcVal}>: {po.billingAddress}</span>
           </div>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 15, fontWeight: 700, borderTop: '2px solid #cbd5e1', marginTop: 6 }}>
-          <span>Grand Total ({po.currency || 'AED'})</span>
-          <span style={{ color: '#1e3a5f' }}>{fmtAED(po.grandTotal)}</span>
+
+        {po.warrantyTerms && (
+          <div style={S.tcRow}>
+            <span style={S.tcKey}>Warranty</span>
+            <span style={S.tcVal}>: {po.warrantyTerms}</span>
+          </div>
+        )}
+
+        {po.specialConditions && (
+          <div style={{ ...S.tcRow, marginTop: 8 }}>
+            <span style={S.tcVal}>{po.specialConditions}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Closing */}
+      <p style={{ fontSize: 12, marginBottom: 14 }}>
+        If the above terms and conditions are acceptable, as a token of acceptance, please sign with stamp and return the
+        duplicate copy of this Purchase Order.
+      </p>
+      <p style={{ fontSize: 12, margin: '0 0 2px' }}>Thanking you,</p>
+      <p style={{ fontSize: 12, margin: '0 0 14px' }}>Yours sincerely,</p>
+      <p style={{ fontSize: 12, fontWeight: 700, marginBottom: 24 }}>For {po.fromName || req?.departmentName || '[Company / Organization Name]'}</p>
+
+      {/* Signatories */}
+      <div style={S.signRow}>
+        <div style={S.sigBox}>
+          <div style={S.sigLine} />
+          <p style={{ margin: 0, fontWeight: 600 }}>{po.authorizedBy || '[Name]'}</p>
+          <p style={{ margin: 0 }}>{po.authorizedTitle || '[Designation]'}</p>
+        </div>
+        <div style={S.sigBox}>
+          <div style={S.sigLine} />
+          <p style={{ margin: 0, fontWeight: 600 }}>{po.authorizedBy2 || '[Name]'}</p>
+          <p style={{ margin: 0 }}>{po.authorizedTitle2 || '[Designation]'}</p>
         </div>
       </div>
+
+      {/* Acceptance block */}
+      <div style={S.acceptBox}>
+        <p style={S.acceptHead}>ACCEPTED THE PURCHASE ORDER</p>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <tbody>
+            <tr>
+              <td style={{ width: '50%', verticalAlign: 'top', paddingBottom: 10 }}>
+                <div>Signature: <span style={S.fieldLine} /></div>
+                <div style={{ marginTop: 8 }}>Name: <span style={S.fieldLine} /></div>
+                <div style={{ marginTop: 8 }}>Designation: <span style={S.fieldLine} /></div>
+              </td>
+              <td style={{ width: '50%', verticalAlign: 'top', paddingBottom: 10, paddingLeft: 20 }}>
+                <div>Date: <span style={S.fieldLine} /></div>
+                <div style={{ marginTop: 24 }}>(Seal)</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
     </div>
-
-    {/* Terms */}
-    {[['Payment Terms', po.paymentTerms], ['Delivery Terms', po.deliveryTerms], ['Warranty', po.warrantyTerms], ['Special Conditions', po.specialConditions]].filter(([,v]) => v).length > 0 && (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
-        {[['Payment Terms', po.paymentTerms], ['Delivery Terms', po.deliveryTerms], ['Warranty', po.warrantyTerms], ['Special Conditions', po.specialConditions]]
-          .filter(([, v]) => v)
-          .map(([l, v]) => (
-            <div key={l} style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 12 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: 1, margin: '0 0 4px' }}>{l}</p>
-              <p style={{ fontSize: 12, color: '#334155', margin: 0 }}>{v}</p>
-            </div>
-          ))}
-      </div>
-    )}
-
-    {/* Signature */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 32, paddingTop: 20, borderTop: '1px solid #e2e8f0' }}>
-      <div>
-        <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 48px' }}>Authorized Signatory</p>
-        <div style={{ borderBottom: '1px solid #94a3b8', width: 180, marginBottom: 6 }} />
-        <p style={{ fontSize: 12, fontWeight: 600, margin: 0 }}>{po.authorizedBy || '—'}</p>
-        <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0' }}>{po.authorizedTitle || ''}</p>
-      </div>
-      <div>
-        <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 48px' }}>Vendor Acknowledgement</p>
-        <div style={{ borderBottom: '1px solid #94a3b8', width: 180, marginBottom: 6 }} />
-        <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>Signature / Stamp</p>
-      </div>
-    </div>
-
-    <p style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', marginTop: 24 }}>
-      This is a computer-generated Purchase Order — {po.fromName || req?.departmentName}
-    </p>
-  </div>
-);
+  );
+};
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const EMPTY_ITEM = { description: '', quantity: 1, unit: '', unitPrice: '', totalPrice: 0 };
@@ -158,11 +250,14 @@ const POUpload = () => {
     poNumber: '', poDate: today(),
     toName: '', toAddress: '', toContact: '', toEmail: '',
     fromName: '', fromAddress: '',
-    subjectRef: '', deliveryLocation: '',
+    subjectRef: '', deliveryLocation: '', billingAddress: '',
+    siteProject: '', quotationRef: '', quotationDate: today(),
+    completionDate: '', grandTotalWords: '',
     items: [{ ...EMPTY_ITEM }],
     vatPercent: '0', currency: 'AED',
-    paymentTerms: '', deliveryTerms: '', warrantyTerms: '', specialConditions: '',
+    paymentTerms: '', deliveryTerms: 'CIF', warrantyTerms: '', specialConditions: '',
     authorizedBy: '', authorizedTitle: '',
+    authorizedBy2: '', authorizedTitle2: '',
   });
 
   const set = (key, val) => setPo(p => ({ ...p, [key]: val }));
@@ -215,8 +310,14 @@ const POUpload = () => {
         deliveryTerms:     d?.deliveryTerms     || '',
         warrantyTerms:     d?.warrantyTerms     || '',
         specialConditions: d?.specialConditions || '',
-        authorizedBy:      d?.authorizedBy      || `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
-        authorizedTitle:   d?.authorizedTitle   || user?.role || '',
+        siteProject:       d?.siteProject       || '',
+        quotationRef:      d?.quotationRef      || '',
+        quotationDate:     d?.quotationDate ? new Date(d.quotationDate).toISOString().split('T')[0] : today(),
+        completionDate:    d?.completionDate ? new Date(d.completionDate).toISOString().split('T')[0] : '',
+        grandTotalWords:   d?.grandTotalWords   || '',
+        billingAddress:    d?.billingAddress    || '',
+        authorizedBy2:     d?.authorizedBy2     || '',
+        authorizedTitle2:  d?.authorizedTitle2  || '',
       }));
     } catch {
       toast.error('Failed to load requirement');
@@ -366,8 +467,26 @@ const POUpload = () => {
               </Field>
               <Field label="Subject / Reference" required>
                 <input type="text" className="input-field w-full sm:col-span-2" readOnly={!canEdit}
-                  placeholder="e.g. Purchase of Office Laptops"
+                  placeholder="e.g. Purchase, Delivery, Supply of Office Laptops at Site"
                   value={po.subjectRef} onChange={e => set('subjectRef', e.target.value)} />
+              </Field>
+              <Field label="Site / Project Name">
+                <input type="text" className="input-field w-full" readOnly={!canEdit}
+                  placeholder="e.g. Main Office Building Project"
+                  value={po.siteProject} onChange={e => set('siteProject', e.target.value)} />
+              </Field>
+              <Field label="Quotation Ref No">
+                <input type="text" className="input-field w-full" readOnly={!canEdit}
+                  placeholder="e.g. QUO-2024-001"
+                  value={po.quotationRef} onChange={e => set('quotationRef', e.target.value)} />
+              </Field>
+              <Field label="Quotation Date">
+                <input type="date" className="input-field w-full" readOnly={!canEdit}
+                  value={po.quotationDate} onChange={e => set('quotationDate', e.target.value)} />
+              </Field>
+              <Field label="Completion Date">
+                <input type="date" className="input-field w-full" readOnly={!canEdit}
+                  value={po.completionDate} onChange={e => set('completionDate', e.target.value)} />
               </Field>
               <Field label="Delivery Location">
                 <input type="text" className="input-field w-full" readOnly={!canEdit}
