@@ -16,17 +16,26 @@ const emptyForm = {
 
 const Avatar = ({ src, name, size = 'sm' }) => {
   const dim = size === 'lg' ? 'h-20 w-20 text-2xl' : 'h-9 w-9 text-sm';
-  if (src) {
+  const initials = name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
+
+  // Determine image URL — handle absolute URLs (http/https) and relative paths
+  const imgSrc = src
+    ? (src.startsWith('http') ? src : `${BASE_URL}/${src}`)
+    : null;
+
+  if (imgSrc) {
     return (
       <img
-        src={`${BASE_URL}/${src}`}
+        src={imgSrc}
         alt={name}
-        className={`${dim} rounded-full object-cover border-2 border-pink-100`}
-        onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+        className={`${dim} rounded-full object-cover border-2 border-pink-100 shrink-0`}
+        onError={e => {
+          e.target.style.display = 'none';
+          if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+        }}
       />
     );
   }
-  const initials = name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
   return (
     <div className={`${dim} rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold shrink-0`}>
       {initials}
@@ -256,7 +265,18 @@ const AdminUsers = () => {
             {users.map(u => (
               <tr key={u._id} className="hover:bg-pink-50/30 transition-colors">
                 <td className="px-4 py-3">
-                  <Avatar src={u.profileImage} name={`${u.firstName} ${u.lastName}`} />
+                  <div className="flex items-center gap-3">
+                    <Avatar src={u.profileImage} name={`${u.firstName} ${u.lastName}`} />
+                    {/* Fallback initials shown if image fails to load */}
+                    {u.profileImage && (
+                      <div
+                        style={{display:'none'}}
+                        className="h-9 w-9 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold shrink-0 text-sm"
+                      >
+                        {`${u.firstName[0]}${u.lastName[0]}`.toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <p className="font-medium text-slate-800">{u.firstName} {u.lastName}</p>

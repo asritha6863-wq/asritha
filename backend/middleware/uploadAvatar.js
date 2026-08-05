@@ -1,6 +1,6 @@
-const multer = require('multer');
-const path   = require('path');
-const fs     = require('fs');
+const multer  = require('multer');
+const path    = require('path');
+const fs      = require('fs');
 const ErrorResponse = require('../utils/ErrorResponse');
 
 const AVATAR_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
