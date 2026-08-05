@@ -84,6 +84,10 @@ const approvalService = {
   // ── Accountant: 3-way match failure ──────────────────────────────────────
   threeWayReject: (id, payload) =>
     api.post(`/approval/requirements/${id}/three-way-reject`, payload),
+
+  // ── Junior Accountant: save payment record ────────────────────────────────
+  savePaymentRecord: (id, data) =>
+    api.post(`/approval/requirements/${id}/save-payment-record`, data),
 };
 
 export default approvalService;

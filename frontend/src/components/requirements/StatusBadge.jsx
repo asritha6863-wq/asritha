@@ -30,6 +30,9 @@ const CONFIG = {
   // ── Payment / Accounts stage ───────────────────────────────────────────────
   'Payment Pending':    { bg: 'bg-purple-50',   text: 'text-purple-700',  dot: 'bg-purple-500'  },
   'Payment Verification':{ bg: 'bg-fuchsia-50', text: 'text-fuchsia-700', dot: 'bg-fuchsia-500' },
+  'Payment Approved':   { bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  'Payment Processing': { bg: 'bg-blue-50',     text: 'text-blue-700',    dot: 'bg-blue-500'    },
+  'Paid':               { bg: 'bg-green-100',   text: 'text-green-800',   dot: 'bg-green-600'   },
 
   // ── Terminal statuses ──────────────────────────────────────────────────────
   Completed:            { bg: 'bg-green-50',    text: 'text-green-700',   dot: 'bg-green-500'   },

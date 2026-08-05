@@ -214,9 +214,29 @@ const getRoutingBanner = (userRole, type, total, reqStatus) => {
   if (userRole === 'Accountant' && reqStatus === 'Payment Verification') {
     return {
       icon: '🔍', bg: 'border-fuchsia-200 bg-fuchsia-50', titleColor: 'text-fuchsia-800', descColor: 'text-fuchsia-700',
-      title: 'Three-Way Match Passed — Approve for Payment',
-      desc: 'Confirm that the Purchase Order, GRN, and Supplier Invoice all match. Approving marks this procurement as Completed.',
-      btnOverride: '🔍 Approve — 3-Way Match Passed',
+      title: 'Three-Way Match Passed — Forward to Finance Manager',
+      desc: 'Confirm that PO, GRN, and Invoice all match. Approving sends to Finance Manager for payment confirmation.',
+      btnOverride: '🔍 Approve — Forward to Finance Manager',
+    };
+  }
+
+  // ── Finance Manager: confirm payment ─────────────────────────────────────
+  if (userRole === 'Finance Manager' && reqStatus === 'Payment Approved') {
+    return {
+      icon: '💰', bg: 'border-emerald-200 bg-emerald-50', titleColor: 'text-emerald-800', descColor: 'text-emerald-700',
+      title: 'Confirm Payment — Forward to Junior Accountant',
+      desc: 'The Senior Accountant has verified all documents. Confirm the payment to proceed. Junior Accountant will record the payment details.',
+      btnOverride: '💰 Confirm Payment',
+    };
+  }
+
+  // ── Junior Accountant: record payment ────────────────────────────────────
+  if (userRole === 'Junior Accountant' && reqStatus === 'Payment Processing') {
+    return {
+      icon: '📝', bg: 'border-blue-200 bg-blue-50', titleColor: 'text-blue-800', descColor: 'text-blue-700',
+      title: 'Record Payment Details & Mark as Paid',
+      desc: 'Fill in the payment reference, bank details, and date above, then submit to mark this procurement as fully paid.',
+      btnOverride: '✅ Mark as Paid',
     };
   }
 

@@ -9,6 +9,8 @@ export const ROLES = {
   MANAGING_DIRECTOR: 'Managing Director',
   CHAIRMAN: 'Chairman',
   ACCOUNTANT: 'Accountant',
+  FINANCE_MANAGER: 'Finance Manager',
+  JUNIOR_ACCOUNTANT: 'Junior Accountant',
 };
 
 export const ALL_ROLES = Object.values(ROLES);
@@ -24,4 +26,6 @@ export const ROLE_DASHBOARD_PATH = {
   [ROLES.MANAGING_DIRECTOR]: '/dashboard/managing-director',
   [ROLES.CHAIRMAN]: '/dashboard/chairman',
   [ROLES.ACCOUNTANT]: '/dashboard/accountant',
+  [ROLES.FINANCE_MANAGER]: '/dashboard/finance-manager',
+  [ROLES.JUNIOR_ACCOUNTANT]: '/dashboard/junior-accountant',
 };

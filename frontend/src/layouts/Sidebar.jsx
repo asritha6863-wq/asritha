@@ -42,6 +42,8 @@ const Sidebar = ({ open, onClose }) => {
   const isMD   = user?.role === ROLES.MANAGING_DIRECTOR;
   const isDD   = user?.role === ROLES.DEPARTMENT_DIRECTOR;
   const isAcc  = user?.role === ROLES.ACCOUNTANT;
+  const isFM   = user?.role === ROLES.FINANCE_MANAGER;
+  const isJA   = user?.role === ROLES.JUNIOR_ACCOUNTANT;
   const isAdmin = user?.role === ROLES.ADMIN;
 
   return (
@@ -193,6 +195,38 @@ const Sidebar = ({ open, onClose }) => {
               <NavLink to="/review/queue" className={linkClasses}>
                 <Ico d={ICONS.list} className="h-5 w-5" />
                 Verification Queue
+              </NavLink>
+              <SectionLabel>Alerts</SectionLabel>
+              <NavLink to="/notifications" className={linkClasses}>
+                <Ico d={ICONS.bell} className="h-5 w-5" />
+                Notifications
+              </NavLink>
+            </>
+          )}
+
+          {/* Finance Manager nav */}
+          {isFM && (
+            <>
+              <SectionLabel>Finance</SectionLabel>
+              <NavLink to="/review/queue" className={linkClasses}>
+                <Ico d={ICONS.list} className="h-5 w-5" />
+                Payment Confirmations
+              </NavLink>
+              <SectionLabel>Alerts</SectionLabel>
+              <NavLink to="/notifications" className={linkClasses}>
+                <Ico d={ICONS.bell} className="h-5 w-5" />
+                Notifications
+              </NavLink>
+            </>
+          )}
+
+          {/* Junior Accountant nav */}
+          {isJA && (
+            <>
+              <SectionLabel>Payments</SectionLabel>
+              <NavLink to="/review/queue" className={linkClasses}>
+                <Ico d={ICONS.list} className="h-5 w-5" />
+                Payment Processing
               </NavLink>
               <SectionLabel>Alerts</SectionLabel>
               <NavLink to="/notifications" className={linkClasses}>

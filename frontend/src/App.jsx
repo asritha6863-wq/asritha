@@ -28,6 +28,8 @@ import DepartmentDirectorDashboard from './pages/dashboards/DepartmentDirectorDa
 import ManagingDirectorDashboard from './pages/dashboards/ManagingDirectorDashboard';
 import ChairmanDashboard from './pages/dashboards/ChairmanDashboard';
 import AccountantDashboard from './pages/dashboards/AccountantDashboard';
+import FinanceManagerDashboard from './pages/dashboards/FinanceManagerDashboard';
+import JuniorAccountantDashboard from './pages/dashboards/JuniorAccountantDashboard';
 
 // Requirements (Requesting Employee only)
 import RequirementForm from './pages/requirements/RequirementForm';
@@ -89,7 +91,7 @@ function App() {
         </Route>
 
         {/* Approval module — Senior Employee, Dept Manager, and higher roles */}
-        <Route element={<ProtectedRoute allowedRoles={[ROLES.SENIOR_EMPLOYEE, ROLES.DEPARTMENT_MANAGER, ROLES.BUDGET_CONTROLLER, ROLES.DEPARTMENT_DIRECTOR, ROLES.MANAGING_DIRECTOR, ROLES.CHAIRMAN, ROLES.ACCOUNTANT, ROLES.ADMIN]} />}>
+        <Route element={<ProtectedRoute allowedRoles={[ROLES.SENIOR_EMPLOYEE, ROLES.DEPARTMENT_MANAGER, ROLES.BUDGET_CONTROLLER, ROLES.DEPARTMENT_DIRECTOR, ROLES.MANAGING_DIRECTOR, ROLES.CHAIRMAN, ROLES.ACCOUNTANT, ROLES.FINANCE_MANAGER, ROLES.JUNIOR_ACCOUNTANT, ROLES.ADMIN]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/review/queue" element={<ReviewQueue />} />
             <Route path="/review/:id" element={<ReviewDetail />} />
@@ -105,6 +107,20 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={[ROLES.ACCOUNTANT]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard/accountant" element={<AccountantDashboard />} />
+          </Route>
+        </Route>
+
+        {/* Finance Manager dashboard */}
+        <Route element={<ProtectedRoute allowedRoles={[ROLES.FINANCE_MANAGER]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard/finance-manager" element={<FinanceManagerDashboard />} />
+          </Route>
+        </Route>
+
+        {/* Junior Accountant dashboard */}
+        <Route element={<ProtectedRoute allowedRoles={[ROLES.JUNIOR_ACCOUNTANT]} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard/junior-accountant" element={<JuniorAccountantDashboard />} />
           </Route>
         </Route>
 

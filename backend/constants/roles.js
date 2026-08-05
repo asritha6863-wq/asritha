@@ -11,6 +11,8 @@ const ROLES = {
   MANAGING_DIRECTOR: 'Managing Director',
   CHAIRMAN: 'Chairman',
   ACCOUNTANT: 'Accountant',
+  FINANCE_MANAGER: 'Finance Manager',
+  JUNIOR_ACCOUNTANT: 'Junior Accountant',
 };
 
 const ALL_ROLES = Object.values(ROLES);

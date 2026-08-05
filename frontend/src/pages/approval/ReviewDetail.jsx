@@ -22,6 +22,8 @@ const ACTION_STATUS_MAP = {
   'Managing Director':   ['MD Review'],
   'Department Director': ['Director Review', 'Director Review2', 'PO Sign', 'GRN Review2'],
   'Accountant':          ['Payment Verification'],
+  'Finance Manager':     ['Payment Approved'],
+  'Junior Accountant':   ['Payment Processing'],
 };
 
 const FINAL_STATUSES   = ['Completed', 'Rejected', 'Returned'];

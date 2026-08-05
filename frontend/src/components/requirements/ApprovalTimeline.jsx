@@ -9,7 +9,9 @@ const WORKFLOW_STEPS = [
   { label: 'Purchase Order',              statuses: ['PO Pending', 'PO Review', 'PO Sign', 'PO Signed'] },
   { label: 'Goods Receipt (GRN)',         statuses: ['GRN Pending', 'GRN Review', 'GRN Review2'] },
   { label: 'Accounts / 3-Way Matching',  statuses: ['Payment Pending', 'Payment Verification'] },
-  { label: 'Completed',                  statuses: ['Completed'] },
+  { label: 'Finance Manager Approval',   statuses: ['Payment Approved'] },
+  { label: 'Payment Processing',         statuses: ['Payment Processing'] },
+  { label: 'Paid / Completed',           statuses: ['Paid', 'Completed'] },
 ];
 
 const TERMINAL = ['Rejected', 'Returned'];

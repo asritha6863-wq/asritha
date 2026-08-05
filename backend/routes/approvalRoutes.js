@@ -23,6 +23,7 @@ const {
   threeWayReject,
   saveQuotationComparison,
   savePoDetails,
+  savePaymentRecord,
 } = require('../controllers/approvalController');
 
 const APPROVER_ROLES = [
@@ -33,6 +34,8 @@ const APPROVER_ROLES = [
   ROLES.MANAGING_DIRECTOR,
   ROLES.CHAIRMAN,
   ROLES.ACCOUNTANT,
+  ROLES.FINANCE_MANAGER,
+  ROLES.JUNIOR_ACCOUNTANT,
   ROLES.ADMIN,
 ];
 
@@ -77,6 +80,9 @@ router.post('/requirements/:id/save-quotation-comparison', idVal, validate, hand
 
 // Structured PO details (SE enters form fields — no file upload)
 router.post('/requirements/:id/save-po-details',           idVal, validate, savePoDetails);
+
+// Payment record (Junior Accountant fills payment details)
+router.post('/requirements/:id/save-payment-record',       idVal, validate, savePaymentRecord);
 
 // Three-way match rejection (Accountant)
 router.post('/requirements/:id/three-way-reject',          idVal, noteReq, validate, threeWayReject);

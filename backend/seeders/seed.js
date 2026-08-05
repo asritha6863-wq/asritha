@@ -83,6 +83,22 @@ const DEMO_USERS = [
     lastName: 'Accountant',
     // Senior Accountant — performs 3-way matching (PO + GRN + Invoice)
   },
+  {
+    email: 'finance_manager@example.com',
+    role: ROLES.FINANCE_MANAGER,
+    employeeId: 'EMP-010',
+    firstName: 'Farhan',
+    lastName: 'Finance',
+    // Finance Manager — confirms payment after 3-way match
+  },
+  {
+    email: 'junior_accountant@example.com',
+    role: ROLES.JUNIOR_ACCOUNTANT,
+    employeeId: 'EMP-011',
+    firstName: 'Jiya',
+    lastName: 'JrAccount',
+    // Junior Accountant — records payment details (ref, bank, date)
+  },
 ];
 
 const seed = async () => {

@@ -20,7 +20,10 @@ const STATUSES = [
   'GRN Review2',         // Dept Head final GRN approval
   'Payment Pending',     // Dept Head → SE → submit PO+GRN+Invoice to Accountant
   'Payment Verification',// Accountant performs 3-way matching
-  'Completed',           // Accountant approves — fully done
+  'Payment Approved',    // Accountant approved → Finance Manager confirms payment
+  'Payment Processing',  // Finance Manager confirms → Junior Accountant fills payment details
+  'Paid',                // Junior Accountant records payment — procurement fully complete
+  'Completed',           // alias kept for backward compat
   'Rejected',
   'Returned',
 ];
@@ -198,6 +201,23 @@ const RequirementSchema = new mongoose.Schema({
     verifiedAt:     { type: Date },
     verifiedBy:     { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     verifiedByName: { type: String },
+  },
+
+  // Payment details (filled by Junior Accountant)
+  paymentRecord: {
+    paymentDate:      { type: Date },
+    paymentRef:       { type: String, trim: true },   // Bank ref / TT number
+    paymentMethod:    { type: String, trim: true },   // Bank Transfer, Cheque, etc.
+    bankName:         { type: String, trim: true },
+    amountPaid:       { type: Number, min: 0 },
+    currency:         { type: String, default: 'AED' },
+    notes:            { type: String, trim: true, maxlength: 1000 },
+    recordedBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    recordedByName:   { type: String },
+    recordedAt:       { type: Date },
+    confirmedBy:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Finance Manager
+    confirmedByName:  { type: String },
+    confirmedAt:      { type: Date },
   },
 
   // Workflow control
