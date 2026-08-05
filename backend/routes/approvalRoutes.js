@@ -23,6 +23,7 @@ const {
   threeWayReject,
   saveQuotationComparison,
   savePoDetails,
+  saveJournalEntry,
   savePaymentRecord,
 } = require('../controllers/approvalController');
 
@@ -81,7 +82,10 @@ router.post('/requirements/:id/save-quotation-comparison', idVal, validate, hand
 // Structured PO details (SE enters form fields — no file upload)
 router.post('/requirements/:id/save-po-details',           idVal, validate, savePoDetails);
 
-// Payment record (Junior Accountant fills payment details)
+// Journal entry (Junior Accountant)
+router.post('/requirements/:id/save-journal-entry',        idVal, validate, saveJournalEntry);
+
+// Payment record (Senior Accountant)
 router.post('/requirements/:id/save-payment-record',       idVal, validate, savePaymentRecord);
 
 // Three-way match rejection (Accountant)

@@ -57,14 +57,25 @@ const Sidebar = ({ open, onClose }) => {
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Logo */}
-        <div className="mb-8 flex items-center gap-2.5 px-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-100">
-            <span className="font-display text-lg font-extrabold text-pink-700">E</span>
+        {/* Logo — NiSHKA */}
+        <div className="mb-8 flex items-center gap-3 px-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100">
+            {/* Peacock fan icon matching NiSHKA logo */}
+            <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
+              <circle cx="20" cy="22" r="4" fill="#d94f8c"/>
+              <circle cx="20" cy="22" r="2" fill="#fbe8f0"/>
+              {/* Fan lines */}
+              {[[-6,-10],[0,-12],[6,-10],[10,-6],[12,0],[10,6],[-10,-6],[-12,0],[-10,6]].map(([dx,dy],i)=>(
+                <line key={i} x1="20" y1="22" x2={20+dx} y2={22+dy} stroke="#d94f8c" strokeWidth="1.5" strokeLinecap="round"/>
+              ))}
+              {[[-6,-10],[0,-12],[6,-10],[10,-6],[12,0],[10,6],[-10,-6],[-12,0],[-10,6]].map(([dx,dy],i)=>(
+                <circle key={i} cx={20+dx} cy={22+dy} r="1.5" fill="#d94f8c"/>
+              ))}
+            </svg>
           </div>
           <div>
-            <p className="font-display text-sm font-bold text-white leading-tight">ERP Procurement</p>
-            <p className="text-xs text-slate-400 leading-tight">& Payment Management</p>
+            <p className="font-display text-base font-bold text-white leading-tight tracking-wide">NiSHKA</p>
+            <p className="text-xs text-pink-300 leading-tight tracking-widest uppercase" style={{fontSize:'9px'}}>Momentous Jewellery</p>
           </div>
         </div>
 
@@ -258,15 +269,8 @@ const Sidebar = ({ open, onClose }) => {
           </NavLink>
         </nav>
 
-        <div className="mt-6 rounded-lg bg-pink-800 px-3 py-3 text-xs text-pink-200">
-          {isRE  ? 'Create and track your purchase requests. Returned items can be edited and resubmitted.'
-            : isSE ? 'Review Queue → Quotations → PO upload → confirm sent → GRN → Invoice submission.'
-            : isDM ? 'Budget ≤ AED 500 → direct to quotation stage. Budget > AED 500 → Budget Controller.'
-            : isBC ? 'AED 500–3,000 → forward to Dept Head. Above AED 3,000 → escalate to MD.'
-            : isMD ? 'You approve requests above AED 3,000. Forwards to Department Head after approval.'
-            : isDD ? 'First pass → SE collects quotes. PO stage → digitally sign PO. GRN stage → approve GRN.'
-            : isAcc ? 'Three-way match: PO + GRN + Invoice must all align before approving payment.'
-            : 'Full procurement workflow: PR → SE → DM → BC/MD → Dept Head → Quotation → PO → GRN → Payment.'}
+        <div className="mt-6 border-t border-pink-800 pt-4 px-2">
+          <p className="text-xs text-pink-400 text-center tracking-widest uppercase" style={{fontSize:'9px'}}>Procurement Management System</p>
         </div>
       </aside>
     </>

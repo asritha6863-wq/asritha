@@ -21,9 +21,9 @@ const ACTION_STATUS_MAP = {
   'Budget Controller':   ['Budget Check'],
   'Managing Director':   ['MD Review'],
   'Department Director': ['Director Review', 'Director Review2', 'PO Sign', 'GRN Review2'],
-  'Accountant':          ['Payment Verification'],
-  'Finance Manager':     ['Payment Approved'],
-  'Junior Accountant':   ['Payment Processing'],
+  'Accountant':          ['Payment Verification', 'Journal Review', 'Payment Entry'],
+  'Finance Manager':     ['FM Verification'],
+  'Junior Accountant':   ['Journal Entry', 'Filing'],
 };
 
 const FINAL_STATUSES   = ['Completed', 'Rejected', 'Returned'];

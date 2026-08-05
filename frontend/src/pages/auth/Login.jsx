@@ -7,12 +7,27 @@ import TextField from '../../components/common/TextField';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 
+// NiSHKA peacock-fan SVG logo
+const NishkaLogo = () => (
+  <svg viewBox="0 0 80 80" fill="none" className="h-16 w-16">
+    {/* Center circle */}
+    <circle cx="40" cy="50" r="7" fill="#d94f8c"/>
+    <circle cx="40" cy="50" r="3.5" fill="#fbe8f0"/>
+    {/* Fan rays */}
+    {[
+      [0,-22],[8,-20],[15,-15],[20,-8],[22,0],[20,8],
+      [-8,-20],[-15,-15],[-20,-8],[-22,0],[-20,8]
+    ].map(([dx,dy],i)=>(
+      <g key={i}>
+        <line x1="40" y1="50" x2={40+dx} y2={50+dy} stroke="#d94f8c" strokeWidth="1.8" strokeLinecap="round"/>
+        <circle cx={40+dx} cy={50+dy} r="2.5" fill="#d94f8c"/>
+      </g>
+    ))}
+  </svg>
+);
+
 const Login = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,26 +42,31 @@ const Login = () => {
       const redirectTo = location.state?.from?.pathname || ROLE_DASHBOARD_PATH[user.role] || '/dashboard';
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setServerError(err.message || 'Login failed. Please try again.');
+      setServerError(err.message || 'Invalid email or password.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-navy-900 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center px-4 py-12" style={{ background: 'linear-gradient(135deg, #fdf2f6 0%, #fbe8f0 50%, #f7d1e2 100%)' }}>
       <div className="w-full max-w-md">
+
+        {/* NiSHKA Brand Header */}
         <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gold-500">
-            <span className="font-display text-2xl font-extrabold text-navy-900">E</span>
-          </div>
-          <h1 className="text-center font-display text-2xl font-bold text-white">ERP Procurement</h1>
-          <p className="mt-1 text-center text-sm text-slate-400">& Payment Management System</p>
+          <NishkaLogo />
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-widest" style={{ color: '#d94f8c', letterSpacing: '0.15em' }}>
+            NiSHKA
+          </h1>
+          <p className="mt-0.5 text-xs tracking-widest text-pink-400 uppercase">Momentous Jewellery</p>
+          <div className="mt-4 h-px w-16 bg-pink-300" />
+          <p className="mt-3 text-sm font-medium text-pink-600">Procurement Management System</p>
         </div>
 
-        <div className="card p-8">
-          <h2 className="mb-1 text-lg font-semibold text-slate-900">Sign in to your account</h2>
-          <p className="mb-6 text-sm text-slate-500">Enter your credentials to access your dashboard.</p>
+        {/* Login Card */}
+        <div className="rounded-2xl border border-pink-100 bg-white shadow-xl shadow-pink-100/50 px-8 py-8">
+          <h2 className="mb-1 text-lg font-semibold text-slate-800">Sign in</h2>
+          <p className="mb-6 text-sm text-slate-500">Enter your credentials to continue.</p>
 
           {serverError && (
             <div className="mb-4">
@@ -59,7 +79,7 @@ const Login = () => {
               label="Email address"
               name="email"
               type="email"
-              placeholder="you@company.com"
+              placeholder="you@nishka.com"
               register={register}
               registerOptions={{
                 required: 'Email is required',
@@ -78,19 +98,24 @@ const Login = () => {
             />
 
             <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-sm font-medium text-navy-600 hover:text-navy-800">
+              <Link to="/forgot-password" className="text-sm font-medium text-pink-600 hover:text-pink-800">
                 Forgot password?
               </Link>
             </div>
 
-            <Button type="submit" loading={submitting} className="w-full">
-              Sign in
-            </Button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full rounded-lg py-2.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
+              style={{ background: submitting ? '#e87aab' : '#d94f8c' }}
+            >
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </button>
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-500">
-          Demo accounts: admin@example.com, department_manager@example.com, etc. Password: Passw0rd!
+        <p className="mt-6 text-center text-xs text-pink-400">
+          © {new Date().getFullYear()} NiSHKA Momentous Jewellery
         </p>
       </div>
     </div>

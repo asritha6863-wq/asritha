@@ -27,12 +27,16 @@ const CONFIG = {
   'GRN Review':         { bg: 'bg-amber-50',    text: 'text-amber-800',   dot: 'bg-amber-500'   },
   'GRN Review2':        { bg: 'bg-yellow-50',   text: 'text-yellow-800',  dot: 'bg-yellow-500'  },
 
-  // ── Payment / Accounts stage ───────────────────────────────────────────────
-  'Payment Pending':    { bg: 'bg-purple-50',   text: 'text-purple-700',  dot: 'bg-purple-500'  },
-  'Payment Verification':{ bg: 'bg-fuchsia-50', text: 'text-fuchsia-700', dot: 'bg-fuchsia-500' },
-  'Payment Approved':   { bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  'Payment Processing': { bg: 'bg-blue-50',     text: 'text-blue-700',    dot: 'bg-blue-500'    },
-  'Paid':               { bg: 'bg-green-100',   text: 'text-green-800',   dot: 'bg-green-600'   },
+  'Payment Pending':      { bg: 'bg-purple-50',   text: 'text-purple-700',  dot: 'bg-purple-500'  },
+  'Payment Verification': { bg: 'bg-fuchsia-50',  text: 'text-fuchsia-700', dot: 'bg-fuchsia-500' },
+  'Journal Entry':        { bg: 'bg-blue-50',     text: 'text-blue-700',    dot: 'bg-blue-500'    },
+  'Journal Review':       { bg: 'bg-indigo-50',   text: 'text-indigo-700',  dot: 'bg-indigo-500'  },
+  'FM Verification':      { bg: 'bg-teal-50',     text: 'text-teal-700',    dot: 'bg-teal-500'    },
+  'Payment Entry':        { bg: 'bg-amber-50',    text: 'text-amber-700',   dot: 'bg-amber-500'   },
+  'Filing':               { bg: 'bg-cyan-50',     text: 'text-cyan-700',    dot: 'bg-cyan-500'    },
+  'Payment Approved':     { bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  'Payment Processing':   { bg: 'bg-sky-50',      text: 'text-sky-700',     dot: 'bg-sky-500'     },
+  'Paid':                 { bg: 'bg-green-100',   text: 'text-green-800',   dot: 'bg-green-600'   },
 
   // ── Terminal statuses ──────────────────────────────────────────────────────
   Completed:            { bg: 'bg-green-50',    text: 'text-green-700',   dot: 'bg-green-500'   },

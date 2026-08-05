@@ -54,7 +54,9 @@ const FinanceManagerDashboard = () => {
     try {
       if (type === 'approve') await approvalService.approve(req._id, note);
       if (type === 'reject')  await approvalService.reject(req._id, note);
-      toast.success(type === 'approve' ? '💰 Payment confirmed. Forwarded to Junior Accountant to record payment.' : '❌ Rejected.');
+      toast.success(type === 'approve'
+        ? '✅ Payment approved. Sent back to Senior Accountant to enter payment details.'
+        : '❌ Rejected.');
       setModal(null); loadStats(); loadQueue();
     } catch (err) { toast.error(err.message || 'Action failed'); }
     finally { setActionLoading(false); }
@@ -76,7 +78,7 @@ const FinanceManagerDashboard = () => {
     return months;
   })();
 
-  const pending  = stats?.stats?.['Payment Approved'] ?? 0;
+  const pending  = stats?.stats?.['FM Verification'] ?? 0;
   const paid     = stats?.stats?.['Paid'] ?? 0;
   const totalValue = queue.reduce((s, r) => s + (r.estimatedTotalPrice || 0), 0);
 
@@ -118,10 +120,10 @@ const FinanceManagerDashboard = () => {
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-start gap-3">
         <span className="text-2xl">💰</span>
         <div>
-          <p className="text-sm font-semibold text-emerald-800">Finance Manager — Payment Confirmation</p>
+          <p className="text-sm font-semibold text-emerald-800">Finance Manager — Step 4: Payment Verification</p>
           <p className="text-xs text-emerald-700 mt-0.5">
-            After the Senior Accountant completes the 3-way match, you confirm the payment.
-            Once confirmed, the Junior Accountant records the payment reference and bank details to close the procurement cycle.
+            The Senior Accountant has verified the journal entry and sends it for your approval.
+            Review the journal entry details and approve. SA will then enter payment details and make the payment.
           </p>
         </div>
       </div>
@@ -164,8 +166,8 @@ const FinanceManagerDashboard = () => {
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
-            <h3 className="text-sm font-semibold text-slate-700">Payment Confirmation Queue</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Invoices approved by Senior Accountant — awaiting your confirmation</p>
+            <h3 className="text-sm font-semibold text-slate-700">Payment Verification Queue</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Journal entries verified by SA — awaiting your approval before payment</p>
           </div>
           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">{queue.length} pending</span>
         </div>

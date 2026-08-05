@@ -210,34 +210,35 @@ const getRoutingBanner = (userRole, type, total, reqStatus) => {
     };
   }
 
-  // ── Accountant: 3-way matching ────────────────────────────────────────────
+  // ── Step 1: SA — 3-way match → JA journal entry ─────────────────────────
   if (userRole === 'Accountant' && reqStatus === 'Payment Verification') {
-    return {
-      icon: '🔍', bg: 'border-fuchsia-200 bg-fuchsia-50', titleColor: 'text-fuchsia-800', descColor: 'text-fuchsia-700',
-      title: 'Three-Way Match Passed — Forward to Finance Manager',
-      desc: 'Confirm that PO, GRN, and Invoice all match. Approving sends to Finance Manager for payment confirmation.',
-      btnOverride: '🔍 Approve — Forward to Finance Manager',
-    };
+    return { icon:'🔍', bg:'border-fuchsia-200 bg-fuchsia-50', titleColor:'text-fuchsia-800', descColor:'text-fuchsia-700',
+      title:'3-Way Match Verified — Send to Junior Accountant', desc:'Confirm all documents match. Junior Accountant will make the journal entry.', btnOverride:'✅ Verified — Send to JA for Journal Entry' };
   }
-
-  // ── Finance Manager: confirm payment ─────────────────────────────────────
-  if (userRole === 'Finance Manager' && reqStatus === 'Payment Approved') {
-    return {
-      icon: '💰', bg: 'border-emerald-200 bg-emerald-50', titleColor: 'text-emerald-800', descColor: 'text-emerald-700',
-      title: 'Confirm Payment — Forward to Junior Accountant',
-      desc: 'The Senior Accountant has verified all documents. Confirm the payment to proceed. Junior Accountant will record the payment details.',
-      btnOverride: '💰 Confirm Payment',
-    };
+  // ── Step 2: JA — journal entry → SA review ───────────────────────────────
+  if (userRole === 'Junior Accountant' && reqStatus === 'Journal Entry') {
+    return { icon:'📝', bg:'border-blue-200 bg-blue-50', titleColor:'text-blue-800', descColor:'text-blue-700',
+      title:'Submit Journal Entry to Senior Accountant', desc:'Save the journal entry details above, then submit for SA verification.', btnOverride:'📝 Submit Journal Entry' };
   }
-
-  // ── Junior Accountant: record payment ────────────────────────────────────
-  if (userRole === 'Junior Accountant' && reqStatus === 'Payment Processing') {
-    return {
-      icon: '📝', bg: 'border-blue-200 bg-blue-50', titleColor: 'text-blue-800', descColor: 'text-blue-700',
-      title: 'Record Payment Details & Mark as Paid',
-      desc: 'Fill in the payment reference, bank details, and date above, then submit to mark this procurement as fully paid.',
-      btnOverride: '✅ Mark as Paid',
-    };
+  // ── Step 3: SA — verifies journal entry → FM ─────────────────────────────
+  if (userRole === 'Accountant' && reqStatus === 'Journal Review') {
+    return { icon:'✅', bg:'border-indigo-200 bg-indigo-50', titleColor:'text-indigo-800', descColor:'text-indigo-700',
+      title:'Journal Entry Verified — Forward to Finance Manager', desc:'Verify the journal entry made by JA and forward to Finance Manager for payment approval.', btnOverride:'✅ Verified — Forward to Finance Manager' };
+  }
+  // ── Step 4: FM — approves → SA makes payment ─────────────────────────────
+  if (userRole === 'Finance Manager' && reqStatus === 'FM Verification') {
+    return { icon:'💰', bg:'border-teal-200 bg-teal-50', titleColor:'text-teal-800', descColor:'text-teal-700',
+      title:'Approve Payment — Send to Senior Accountant', desc:'Review and approve the payment. Senior Accountant will enter payment details and process the payment.', btnOverride:'💰 Approve Payment' };
+  }
+  // ── Step 5: SA — enters payment → JA for filing ──────────────────────────
+  if (userRole === 'Accountant' && reqStatus === 'Payment Entry') {
+    return { icon:'💳', bg:'border-amber-200 bg-amber-50', titleColor:'text-amber-800', descColor:'text-amber-700',
+      title:'Payment Made — Send to Junior Accountant for Filing', desc:'Enter payment details above and confirm payment is made. JA will file the documents.', btnOverride:'💳 Payment Made — Send for Filing' };
+  }
+  // ── Step 6: JA — files documents → Paid ─────────────────────────────────
+  if (userRole === 'Junior Accountant' && reqStatus === 'Filing') {
+    return { icon:'📁', bg:'border-cyan-200 bg-cyan-50', titleColor:'text-cyan-800', descColor:'text-cyan-700',
+      title:'File Documents — Mark as Paid', desc:'Confirm all documents have been filed. This will close the procurement cycle.', btnOverride:'📁 Filed — Mark as Paid ✅' };
   }
 
   return null;

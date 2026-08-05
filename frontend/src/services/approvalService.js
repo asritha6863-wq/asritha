@@ -11,7 +11,6 @@ const approvalService = {
   reject:      (id, note)    => api.post(`/approval/requirements/${id}/reject`,   { note }),
   returnReq:   (id, note)    => api.post(`/approval/requirements/${id}/return`,   { note }),
   addComment:  (id, text)    => api.post(`/approval/requirements/${id}/comments`, { text }),
-
   // ── Quotations (SE) ──────────────────────────────────────────────────────
   uploadQuotations: (id, files) => {
     const fd = new FormData();
@@ -88,6 +87,9 @@ const approvalService = {
   // ── Junior Accountant: save payment record ────────────────────────────────
   savePaymentRecord: (id, data) =>
     api.post(`/approval/requirements/${id}/save-payment-record`, data),
+
+  saveJournalEntry: (id, data) =>
+    api.post(`/approval/requirements/${id}/save-journal-entry`, data),
 };
 
 export default approvalService;

@@ -61,9 +61,10 @@ const WORKFLOW = {
   [ROLES.BUDGET_CONTROLLER]:   { actOn: ['Budget Check'] },
   [ROLES.MANAGING_DIRECTOR]:   { actOn: ['MD Review'] },
   [ROLES.DEPARTMENT_DIRECTOR]: { actOn: ['Director Review', 'Director Review2', 'PO Sign', 'GRN Review2'] },
-  [ROLES.ACCOUNTANT]:          { actOn: ['Payment Verification'] },
-  [ROLES.FINANCE_MANAGER]:     { actOn: ['Payment Approved'] },
-  [ROLES.JUNIOR_ACCOUNTANT]:   { actOn: ['Payment Processing'] },
+  // Payment workflow
+  [ROLES.ACCOUNTANT]:          { actOn: ['Payment Verification', 'Journal Review', 'Payment Entry'] },
+  [ROLES.FINANCE_MANAGER]:     { actOn: ['FM Verification'] },
+  [ROLES.JUNIOR_ACCOUNTANT]:   { actOn: ['Journal Entry', 'Filing'] },
 };
 
 const getStep  = (role)         => WORKFLOW[role];
@@ -416,26 +417,48 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
     note             = `Payment docs submitted by SE to Accountant. ${note}`.trim();
   }
 
-  // ── Accountant: 3-way matching approved → Finance Manager ───────────────
+  // ── Step 1: Senior Accountant — 3-way match → Journal Entry (JA) ──────────
   else if (req.user.role === ROLES.ACCOUNTANT && prev === 'Payment Verification') {
     requirement.threeWayMatch = {
-      poMatched:      true,
-      grnMatched:     true,
-      invoiceMatched: true,
-      notes:          note || 'Three-way match passed. Invoice approved for payment.',
-      verifiedAt:     new Date(),
-      verifiedBy:     req.user._id,
+      poMatched: true, grnMatched: true, invoiceMatched: true,
+      notes: note || 'Three-way match passed.',
+      verifiedAt: new Date(), verifiedBy: req.user._id,
       verifiedByName: `${req.user.firstName} ${req.user.lastName}`,
     };
-    nextStatus       = 'Payment Approved';
-    nextApprover     = await findAnyRole(ROLES.FINANCE_MANAGER);
-    nextApproverRole = ROLES.FINANCE_MANAGER;
-    successMsg       = '✅ Three-way match passed! Forwarded to Finance Manager for payment confirmation.';
-    note             = `3-way match verified by Accountant. Forwarded to Finance Manager. ${note}`.trim();
+    nextStatus       = 'Journal Entry';
+    nextApprover     = await findAnyRole(ROLES.JUNIOR_ACCOUNTANT);
+    nextApproverRole = ROLES.JUNIOR_ACCOUNTANT;
+    successMsg       = '✅ 3-way match passed. Sent to Junior Accountant for journal entry.';
+    note             = `3-way match verified by SA. JA to make journal entry. ${note}`.trim();
   }
 
-  // ── Finance Manager: confirm payment → Junior Accountant ─────────────────
-  else if (req.user.role === ROLES.FINANCE_MANAGER && prev === 'Payment Approved') {
+  // ── Step 2: Junior Accountant — journal entry done → SA verifies ────────
+  else if (req.user.role === ROLES.JUNIOR_ACCOUNTANT && prev === 'Journal Entry') {
+    if (!requirement.journalEntry?.entryNumber) {
+      return next(new ErrorResponse('Please save journal entry details before submitting.', 400));
+    }
+    requirement.journalEntry.enteredBy     = req.user._id;
+    requirement.journalEntry.enteredByName = `${req.user.firstName} ${req.user.lastName}`;
+    requirement.journalEntry.enteredAt     = new Date();
+    requirement.markModified('journalEntry');
+    nextStatus       = 'Journal Review';
+    nextApprover     = await findAnyRole(ROLES.ACCOUNTANT);
+    nextApproverRole = ROLES.ACCOUNTANT;
+    successMsg       = 'Journal entry submitted. Sent to Senior Accountant for review.';
+    note             = `Journal entry completed by JA. Entry#: ${requirement.journalEntry.entryNumber}. ${note}`.trim();
+  }
+
+  // ── Step 3: Senior Accountant — verifies journal entry → FM ─────────────
+  else if (req.user.role === ROLES.ACCOUNTANT && prev === 'Journal Review') {
+    nextStatus       = 'FM Verification';
+    nextApprover     = await findAnyRole(ROLES.FINANCE_MANAGER);
+    nextApproverRole = ROLES.FINANCE_MANAGER;
+    successMsg       = 'Journal entry verified. Sent to Finance Manager for payment approval.';
+    note             = `Journal entry verified by SA. Forwarded to FM. ${note}`.trim();
+  }
+
+  // ── Step 4: Finance Manager — verifies & approves → SA makes payment ────
+  else if (req.user.role === ROLES.FINANCE_MANAGER && prev === 'FM Verification') {
     requirement.paymentRecord = {
       ...requirement.paymentRecord,
       confirmedBy:     req.user._id,
@@ -443,26 +466,35 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
       confirmedAt:     new Date(),
     };
     requirement.markModified('paymentRecord');
-    nextStatus       = 'Payment Processing';
-    nextApprover     = await findAnyRole(ROLES.JUNIOR_ACCOUNTANT);
-    nextApproverRole = ROLES.JUNIOR_ACCOUNTANT;
-    successMsg       = 'Payment confirmed by Finance Manager. Junior Accountant to record payment details.';
-    note             = `Payment confirmed by Finance Manager. ${note}`.trim();
+    nextStatus       = 'Payment Entry';
+    nextApprover     = await findAnyRole(ROLES.ACCOUNTANT);
+    nextApproverRole = ROLES.ACCOUNTANT;
+    successMsg       = 'Payment approved by Finance Manager. Senior Accountant to enter payment details.';
+    note             = `Payment approved by FM. SA to make payment. ${note}`.trim();
   }
 
-  // ── Junior Accountant: record payment → Paid (Completed) ─────────────────
-  else if (req.user.role === ROLES.JUNIOR_ACCOUNTANT && prev === 'Payment Processing') {
+  // ── Step 5: Senior Accountant — enters payment & makes it → JA for filing
+  else if (req.user.role === ROLES.ACCOUNTANT && prev === 'Payment Entry') {
     if (!requirement.paymentRecord?.paymentRef) {
-      return next(new ErrorResponse('Please record the payment details (reference number) before marking as paid.', 400));
+      return next(new ErrorResponse('Please save payment details (reference number) before submitting.', 400));
     }
     requirement.paymentRecord.recordedBy     = req.user._id;
     requirement.paymentRecord.recordedByName = `${req.user.firstName} ${req.user.lastName}`;
     requirement.paymentRecord.recordedAt     = new Date();
     requirement.markModified('paymentRecord');
+    nextStatus       = 'Filing';
+    nextApprover     = await findAnyRole(ROLES.JUNIOR_ACCOUNTANT);
+    nextApproverRole = ROLES.JUNIOR_ACCOUNTANT;
+    successMsg       = 'Payment made. Sent to Junior Accountant for filing.';
+    note             = `Payment made by SA. Ref: ${requirement.paymentRecord.paymentRef}. JA to file. ${note}`.trim();
+  }
+
+  // ── Step 6: Junior Accountant — files documents → Paid ──────────────────
+  else if (req.user.role === ROLES.JUNIOR_ACCOUNTANT && prev === 'Filing') {
     nextStatus            = 'Paid';
     requirement.completedAt = new Date();
-    successMsg            = '✅ Payment recorded! Procurement process fully complete.';
-    note                  = `Payment recorded by Junior Accountant. Ref: ${requirement.paymentRecord.paymentRef}. ${note}`.trim();
+    successMsg            = '✅ Documents filed. Procurement cycle fully complete!';
+    note                  = `Documents filed by JA. Procurement closed. ${note}`.trim();
   }
 
   else {
@@ -998,7 +1030,32 @@ exports.savePoDetails = asyncHandler(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/approval/requirements/:id/save-payment-record  (Junior Accountant)
+// POST /api/approval/requirements/:id/save-journal-entry  (Junior Accountant)
+// ─────────────────────────────────────────────────────────────────────────────
+exports.saveJournalEntry = asyncHandler(async (req, res, next) => {
+  const requirement = await Requirement.findById(req.params.id);
+  if (!requirement) return next(new ErrorResponse('Requirement not found', 404));
+  if (requirement.status !== 'Journal Entry')
+    return next(new ErrorResponse(`Journal entry can only be saved when status is "Journal Entry". Current: "${requirement.status}"`, 400));
+  if (req.user.role !== ROLES.JUNIOR_ACCOUNTANT)
+    return next(new ErrorResponse('Only Junior Accountant can save journal entry', 403));
+
+  const d = req.body;
+  requirement.journalEntry = {
+    entryNumber:   d.entryNumber   || '',
+    debitAccount:  d.debitAccount  || '',
+    creditAccount: d.creditAccount || '',
+    amount:        Number(d.amount) || requirement.invoiceAmount || requirement.estimatedTotalPrice,
+    narration:     d.narration     || '',
+    entryDate:     d.entryDate ? new Date(d.entryDate) : new Date(),
+  };
+  requirement.markModified('journalEntry');
+  requirement.updatedBy = req.user._id;
+  requirement.timeline.push(makeTimeline(req, 'Journal Entry Saved', requirement.status, requirement.status,
+    `Journal entry saved by JA. Entry#: ${d.entryNumber || '—'}`));
+  await requirement.save();
+  res.status(200).json({ success: true, message: 'Journal entry saved.', journalEntry: requirement.journalEntry });
+});
 // Saves payment details before marking as Paid
 // ─────────────────────────────────────────────────────────────────────────────
 exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
@@ -1024,6 +1081,66 @@ exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
   requirement.updatedBy = req.user._id;
   requirement.timeline.push(makeTimeline(req, 'Payment Record Saved', requirement.status, requirement.status,
     `Payment details saved by Junior Accountant. Ref: ${d.paymentRef || '—'}`));
+  await requirement.save();
+  res.status(200).json({ success: true, message: 'Payment record saved.', paymentRecord: requirement.paymentRecord });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/approval/requirements/:id/save-journal-entry  (Junior Accountant)
+// Status must be "Journal Entry"
+// ─────────────────────────────────────────────────────────────────────────────
+exports.saveJournalEntry = asyncHandler(async (req, res, next) => {
+  const requirement = await Requirement.findById(req.params.id);
+  if (!requirement) return next(new ErrorResponse('Requirement not found', 404));
+  if (requirement.status !== 'Journal Entry')
+    return next(new ErrorResponse(`Journal entry can only be saved when status is "Journal Entry". Current: "${requirement.status}"`, 400));
+  if (req.user.role !== ROLES.JUNIOR_ACCOUNTANT)
+    return next(new ErrorResponse('Only Junior Accountant can save journal entry', 403));
+
+  const d = req.body;
+  requirement.journalEntry = {
+    entryNumber:   d.entryNumber   || '',
+    debitAccount:  d.debitAccount  || '',
+    creditAccount: d.creditAccount || '',
+    amount:        Number(d.amount) || requirement.invoiceAmount || requirement.estimatedTotalPrice || 0,
+    narration:     d.narration     || '',
+    entryDate:     d.entryDate ? new Date(d.entryDate) : new Date(),
+  };
+  requirement.markModified('journalEntry');
+  requirement.updatedBy = req.user._id;
+  requirement.timeline.push(makeTimeline(req, 'Journal Entry Saved', requirement.status, requirement.status,
+    `Journal entry saved by JA. Entry#: ${d.entryNumber || '—'}`));
+  await requirement.save();
+  res.status(200).json({ success: true, message: 'Journal entry saved.', journalEntry: requirement.journalEntry });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/approval/requirements/:id/save-payment-record  (Senior Accountant)
+// Status must be "Payment Entry"
+// ─────────────────────────────────────────────────────────────────────────────
+exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
+  const requirement = await Requirement.findById(req.params.id);
+  if (!requirement) return next(new ErrorResponse('Requirement not found', 404));
+  if (requirement.status !== 'Payment Entry')
+    return next(new ErrorResponse(`Payment record can only be saved when status is "Payment Entry". Current: "${requirement.status}"`, 400));
+  if (req.user.role !== ROLES.ACCOUNTANT)
+    return next(new ErrorResponse('Only Senior Accountant can record payment details', 403));
+
+  const d = req.body;
+  requirement.paymentRecord = {
+    ...requirement.paymentRecord,
+    paymentDate:   d.paymentDate   ? new Date(d.paymentDate) : new Date(),
+    paymentRef:    d.paymentRef    || '',
+    paymentMethod: d.paymentMethod || '',
+    bankName:      d.bankName      || '',
+    amountPaid:    Number(d.amountPaid) || requirement.invoiceAmount || requirement.estimatedTotalPrice || 0,
+    currency:      d.currency      || 'AED',
+    notes:         d.notes         || '',
+  };
+  requirement.markModified('paymentRecord');
+  requirement.updatedBy = req.user._id;
+  requirement.timeline.push(makeTimeline(req, 'Payment Details Saved', requirement.status, requirement.status,
+    `Payment details saved by SA. Ref: ${d.paymentRef || '—'}`));
   await requirement.save();
   res.status(200).json({ success: true, message: 'Payment record saved.', paymentRecord: requirement.paymentRecord });
 });

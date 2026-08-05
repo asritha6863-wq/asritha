@@ -19,11 +19,16 @@ const STATUSES = [
   'GRN Review',          // DM → Dept Head (review GRN)
   'GRN Review2',         // Dept Head final GRN approval
   'Payment Pending',     // Dept Head → SE → submit PO+GRN+Invoice to Accountant
-  'Payment Verification',// Accountant performs 3-way matching
-  'Payment Approved',    // Accountant approved → Finance Manager confirms payment
-  'Payment Processing',  // Finance Manager confirms → Junior Accountant fills payment details
-  'Paid',                // Junior Accountant records payment — procurement fully complete
-  'Completed',           // alias kept for backward compat
+  'Payment Verification',// Senior Accountant performs 3-way matching
+  'Journal Entry',       // SA sends to JA for journal entry
+  'Journal Review',      // JA completes entry → SA verifies
+  'FM Verification',     // SA verified → Finance Manager reviews
+  'Payment Entry',       // FM approved → SA enters payment details
+  'Filing',              // SA made payment → JA files documents
+  'Payment Approved',    // old compat
+  'Payment Processing',  // old compat
+  'Paid',                // Fully complete
+  'Completed',           // alias
   'Rejected',
   'Returned',
 ];
@@ -203,11 +208,11 @@ const RequirementSchema = new mongoose.Schema({
     verifiedByName: { type: String },
   },
 
-  // Payment details (filled by Junior Accountant)
+  // Payment details (filled by Senior Accountant when making payment)
   paymentRecord: {
     paymentDate:      { type: Date },
-    paymentRef:       { type: String, trim: true },   // Bank ref / TT number
-    paymentMethod:    { type: String, trim: true },   // Bank Transfer, Cheque, etc.
+    paymentRef:       { type: String, trim: true },
+    paymentMethod:    { type: String, trim: true },
     bankName:         { type: String, trim: true },
     amountPaid:       { type: Number, min: 0 },
     currency:         { type: String, default: 'AED' },
@@ -215,9 +220,22 @@ const RequirementSchema = new mongoose.Schema({
     recordedBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     recordedByName:   { type: String },
     recordedAt:       { type: Date },
-    confirmedBy:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Finance Manager
+    confirmedBy:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     confirmedByName:  { type: String },
     confirmedAt:      { type: Date },
+  },
+
+  // Journal entry (filled by Junior Accountant)
+  journalEntry: {
+    entryNumber:   { type: String, trim: true },
+    debitAccount:  { type: String, trim: true },
+    creditAccount: { type: String, trim: true },
+    amount:        { type: Number, min: 0 },
+    narration:     { type: String, trim: true, maxlength: 1000 },
+    entryDate:     { type: Date },
+    enteredBy:     { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    enteredByName: { type: String },
+    enteredAt:     { type: Date },
   },
 
   // Workflow control
