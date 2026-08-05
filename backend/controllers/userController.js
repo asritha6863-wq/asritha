@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const ErrorResponse = require('../utils/ErrorResponse');
+const path = require('path');
+const fs   = require('fs');
 
 // @desc    Get all users (supports ?role=&department=&search=&page=&limit=)
 // @route   GET /api/admin/users
@@ -57,17 +59,49 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
-// @desc    Create a user
+// @desc    Create a user (supports multipart/form-data with optional avatar)
 // @route   POST /api/admin/users
 // @access  Private/Admin
 exports.createUser = asyncHandler(async (req, res) => {
   const payload = { ...req.body, createdBy: req.user.id };
+
+  // If an avatar was uploaded via multer, set the profileImage path
+  if (req.file) {
+    payload.profileImage = `uploads/avatars/${req.file.filename}`;
+  }
+
   const user = await User.create(payload);
 
   res.status(201).json({
     success: true,
     message: 'User created successfully.',
     user: user.toSafeObject(),
+  });
+});
+
+// @desc    Upload / replace a user's avatar
+// @route   POST /api/admin/users/:id/avatar
+// @access  Private/Admin
+exports.uploadUserAvatar = asyncHandler(async (req, res, next) => {
+  if (!req.file) return next(new ErrorResponse('No file uploaded', 400));
+
+  const user = await User.findById(req.params.id);
+  if (!user) return next(new ErrorResponse('User not found', 404));
+
+  // Delete old avatar file if it exists
+  if (user.profileImage && user.profileImage.startsWith('uploads/avatars/')) {
+    const oldPath = path.join(__dirname, '..', user.profileImage);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+  user.profileImage = `uploads/avatars/${req.file.filename}`;
+  user.updatedBy = req.user.id;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Avatar updated.',
+    profileImage: user.profileImage,
   });
 });
 

@@ -46,6 +46,7 @@ const path        = require('path');
 const fs          = require('fs');
 const Requirement = require('../models/Requirement');
 const User        = require('../models/User');
+const Department  = require('../models/Department');
 const asyncHandler    = require('../utils/asyncHandler');
 const ErrorResponse   = require('../utils/ErrorResponse');
 const sendNotification = require('../utils/sendNotification');
@@ -84,6 +85,14 @@ const makeTimeline = (req, action, fromStatus, toStatus, note = '') => ({
 // ── User finders ──────────────────────────────────────────────────────────────
 const findInDept  = (role, deptId) => User.findOne({ role, department: deptId, isActive: true });
 const findAnyRole = (role)         => User.findOne({ role, isActive: true });
+const findDeptHead = async (deptId) => {
+  if (!deptId) return findAnyRole(ROLES.DEPARTMENT_DIRECTOR);
+  const dept = await Department.findById(deptId).populate('departmentHead');
+  if (dept && dept.departmentHead && dept.departmentHead.isActive) {
+    return dept.departmentHead;
+  }
+  return (await findInDept(ROLES.DEPARTMENT_DIRECTOR, deptId)) || (await findAnyRole(ROLES.DEPARTMENT_DIRECTOR));
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/approval/queue
@@ -94,8 +103,8 @@ exports.getQueue = asyncHandler(async (req, res) => {
 
   if (!step) return res.status(200).json({ success: true, count: 0, total: 0, pages: 1, requirements: [] });
 
-  // MD, DD, and Accountant see across departments; others filter by own dept
-  const wideRoles = [ROLES.MANAGING_DIRECTOR, ROLES.DEPARTMENT_DIRECTOR, ROLES.ACCOUNTANT];
+  // MD, Accountant, Chairman, Admin see across departments; Department Directors/Managers filter by own dept
+  const wideRoles = [ROLES.MANAGING_DIRECTOR, ROLES.ACCOUNTANT, ROLES.CHAIRMAN, ROLES.ADMIN];
   const deptFilter = (!wideRoles.includes(req.user.role) && req.user.department)
     ? { department: req.user.department }
     : {};
@@ -136,7 +145,7 @@ exports.getQueue = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getApprovalStats = asyncHandler(async (req, res) => {
   const step = getStep(req.user.role);
-  const wideRoles = [ROLES.MANAGING_DIRECTOR, ROLES.DEPARTMENT_DIRECTOR, ROLES.ACCOUNTANT];
+  const wideRoles = [ROLES.MANAGING_DIRECTOR, ROLES.ACCOUNTANT, ROLES.CHAIRMAN, ROLES.ADMIN];
   const deptFilter = (!wideRoles.includes(req.user.role) && req.user.department)
     ? { department: req.user.department }
     : {};
@@ -261,7 +270,7 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
   else if (req.user.role === ROLES.BUDGET_CONTROLLER && prev === 'Budget Check') {
     if (total <= BC_THRESHOLD) {
       nextStatus       = 'Director Review';
-      nextApprover     = await findInDept(ROLES.DEPARTMENT_DIRECTOR, requirement.department) || await findAnyRole(ROLES.DEPARTMENT_DIRECTOR);
+      nextApprover     = await findDeptHead(requirement.department);
       nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
       successMsg       = `Budget ≤ AED ${BC_THRESHOLD} — forwarded to Department Head.`;
       note             = `Budget ≤ AED ${BC_THRESHOLD} — approved by BC. ${note}`.trim();
@@ -277,7 +286,7 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
   // ── MD: executive approval → Dept Head ───────────────────────────────────
   else if (req.user.role === ROLES.MANAGING_DIRECTOR && prev === 'MD Review') {
     nextStatus       = 'Director Review';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_DIRECTOR, requirement.department) || await findAnyRole(ROLES.DEPARTMENT_DIRECTOR);
+    nextApprover     = await findDeptHead(requirement.department);
     nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
     successMsg       = 'MD approved. Forwarded to Department Head.';
     note             = `Approved by MD — forwarded to Dept Head. ${note}`.trim();
@@ -311,7 +320,7 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
   // ── DM: quotation review → Dept Head (Director Review2) ──────────────────
   else if (req.user.role === ROLES.DEPARTMENT_MANAGER && prev === 'Quotation Review') {
     nextStatus       = 'Director Review2';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_DIRECTOR, requirement.department) || await findAnyRole(ROLES.DEPARTMENT_DIRECTOR);
+    nextApprover     = await findDeptHead(requirement.department);
     nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
     successMsg       = 'Quotations reviewed. Forwarded to Department Head for approval.';
     note             = `Quotations reviewed by DM — forwarded to Dept Head. ${note}`.trim();
@@ -344,7 +353,7 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
   // ── DM: PO review → Dept Head to sign ────────────────────────────────────
   else if (req.user.role === ROLES.DEPARTMENT_MANAGER && prev === 'PO Review') {
     nextStatus       = 'PO Sign';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_DIRECTOR, requirement.department) || await findAnyRole(ROLES.DEPARTMENT_DIRECTOR);
+    nextApprover     = await findDeptHead(requirement.department);
     nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
     successMsg       = 'PO reviewed. Forwarded to Department Head for digital signature.';
     note             = `PO reviewed by DM — Dept Head to sign. ${note}`.trim();
@@ -390,7 +399,7 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
   // ── DM: GRN review → Dept Head ────────────────────────────────────────────
   else if (req.user.role === ROLES.DEPARTMENT_MANAGER && prev === 'GRN Review') {
     nextStatus       = 'GRN Review2';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_DIRECTOR, requirement.department) || await findAnyRole(ROLES.DEPARTMENT_DIRECTOR);
+    nextApprover     = await findDeptHead(requirement.department);
     nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
     successMsg       = 'GRN reviewed. Forwarded to Department Head for final GRN approval.';
     note             = `GRN reviewed by DM — forwarded to Dept Head. ${note}`.trim();

@@ -148,7 +148,14 @@ exports.changePassword = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id)
-    .populate('department', 'departmentName departmentCode')
+    .populate({
+      path: 'department',
+      select: 'departmentName departmentCode departmentHead status',
+      populate: {
+        path: 'departmentHead',
+        select: 'firstName lastName email profileImage role',
+      },
+    })
     .populate('designation', 'designationName level');
 
   res.status(200).json({

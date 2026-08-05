@@ -6,7 +6,7 @@ const ErrorResponse = require('../utils/ErrorResponse');
 // @route   GET /api/admin/departments
 // @access  Private/Admin
 exports.getDepartments = asyncHandler(async (req, res) => {
-  const departments = await Department.find().populate('departmentHead', 'firstName lastName email');
+  const departments = await Department.find().populate('departmentHead', 'firstName lastName email profileImage role');
   res.status(200).json({ success: true, count: departments.length, departments });
 });
 
@@ -16,7 +16,7 @@ exports.getDepartments = asyncHandler(async (req, res) => {
 exports.getDepartment = asyncHandler(async (req, res, next) => {
   const department = await Department.findById(req.params.id).populate(
     'departmentHead',
-    'firstName lastName email'
+    'firstName lastName email profileImage role'
   );
 
   if (!department) {
