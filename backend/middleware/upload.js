@@ -22,15 +22,21 @@ if (useCloudinary) {
   const { CloudinaryStorage } = require('multer-storage-cloudinary');
   storage = new CloudinaryStorage({
     cloudinary,
-    params: (_req, file) => ({
-      folder: 'erp/requirements',
-      resource_type: 'auto', // supports pdf + images
-      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-      // Keep original filename accessible via original_filename
-      use_filename: false,
-      // Allow PDF delivery
-      format: undefined,
-    }),
+    params: (_req, file) => {
+      const isPDF = file.mimetype === 'application/pdf';
+      const isDoc = ['application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ].includes(file.mimetype);
+      return {
+        folder: 'erp/requirements',
+        // PDFs and docs must use 'raw' resource_type so Cloudinary serves them correctly
+        resource_type: (isPDF || isDoc) ? 'raw' : 'image',
+        public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+        use_filename: false,
+      };
+    },
   });
 } else {
   // Fallback: local disk storage

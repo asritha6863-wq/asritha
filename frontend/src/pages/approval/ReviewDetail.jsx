@@ -223,8 +223,17 @@ const ReviewDetail = () => {
 
   const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
   const fmtSize = (b) => b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB`;
-  // Helper: build full URL from path (if path is already full URL like Cloudinary, use as-is)
-  const fullUrl = (path) => path?.startsWith('http') ? path : `${baseUrl}/${path}`;
+  // Helper: build full URL. For Cloudinary PDFs stored under /image/, rewrite to /raw/ for correct delivery
+  const fullUrl = (path) => {
+    if (!path) return '';
+    if (!path.startsWith('http')) return `${baseUrl}/${path}`;
+    // Fix Cloudinary PDF URLs: /image/upload/ → /raw/upload/ for proper browser delivery
+    if (path.includes('res.cloudinary.com') && path.includes('/image/upload/') &&
+        (path.endsWith('.pdf') || path.includes('.pdf'))) {
+      return path.replace('/image/upload/', '/raw/upload/');
+    }
+    return path;
+  };
 
   const isSEQuotPending   = user?.role === 'Senior Employee' && req.status === 'Quotation Pending';
   const isSEPOPending     = user?.role === 'Senior Employee' && req.status === 'PO Pending';
