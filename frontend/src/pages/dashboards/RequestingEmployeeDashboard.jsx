@@ -138,7 +138,9 @@ const RequestingEmployeeDashboard = () => {
                 Welcome back, {user?.firstName}! 👋
               </h1>
               <p className="mt-1 text-sm text-navy-200">
-                {user?.role} · {user?.department?.departmentName || 'No department assigned'}
+                {user?.role}
+                {user?.designation?.designationName && ` · ${user.designation.designationName}`}
+                {user?.department?.departmentName && ` · ${user.department.departmentName}`}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
@@ -158,11 +160,29 @@ const RequestingEmployeeDashboard = () => {
         </div>
 
         {/* Employee info strip */}
-        <div className="flex flex-wrap gap-x-8 gap-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3 text-xs text-slate-600">
-          <span><span className="font-semibold text-slate-400">Employee ID: </span>{user?.employeeId}</span>
-          <span><span className="font-semibold text-slate-400">Department: </span>{user?.department?.departmentName || '—'}</span>
-          <span><span className="font-semibold text-slate-400">Designation: </span>{user?.designation?.designationName || '—'}</span>
-          <span><span className="font-semibold text-slate-400">Email: </span>{user?.email}</span>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3 text-sm">
+          {/* Profile photo */}
+          {user?.profileImage ? (
+            <img
+              src={user.profileImage.startsWith('http') ? user.profileImage : `${(import.meta.env.VITE_API_URL || '').replace('/api', '')}/${user.profileImage}`}
+              alt={user.firstName}
+              className="h-10 w-10 rounded-full object-cover border-2 border-pink-200 shrink-0"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-pink-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+              {user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '—'}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600">
+            <span><span className="font-semibold text-slate-400">Employee ID </span>{user?.employeeId}</span>
+            <span><span className="font-semibold text-slate-400">Department </span>
+              <span className="font-medium text-pink-700">{user?.department?.departmentName || '—'}</span>
+            </span>
+            <span><span className="font-semibold text-slate-400">Designation </span>
+              <span className="font-medium text-pink-700">{user?.designation?.designationName || '—'}</span>
+            </span>
+            <span><span className="font-semibold text-slate-400">Email </span>{user?.email}</span>
+          </div>
         </div>
       </div>
 
