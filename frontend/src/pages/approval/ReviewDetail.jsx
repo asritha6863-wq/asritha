@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { fileUrl, isLocalPath } from '../../utils/fileUrl';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
@@ -221,30 +222,9 @@ const ReviewDetail = () => {
   );
   if (!req) return null;
 
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
   const fmtSize = (b) => b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB`;
 
-  // Build full URL. Cloudinary URLs are full https:// links — use as-is.
-  // Local paths (uploads/...) served from backend — may not exist on Render after redeploy.
-  const fullUrl = (path) => {
-    if (!path) return '';
-    if (path.startsWith('http')) {
-      // Fix Cloudinary PDF stored under /image/ → rewrite to /raw/ for proper delivery
-      if (path.includes('res.cloudinary.com') && path.includes('/image/upload/') &&
-          path.toLowerCase().includes('.pdf')) {
-        return path.replace('/image/upload/', '/raw/upload/');
-      }
-      return path;
-    }
-    return `${baseUrl}/${path}`;
-  };
-
-  // Returns true if path is a live Cloudinary URL (safe to view/download)
-  const isCloudinary = (path) => path && path.includes('res.cloudinary.com');
-  // Local paths on Render may be gone — warn user instead of showing broken link
-  const isLocalPath = (path) => path && !path.startsWith('http');
-
-  // Render a View/Download pair, or a "not available" notice for dead local files
+  // Render a View button, or a "not available" notice for dead local files
   const FileLinks = ({ path, label = '' }) => {
     if (!path) return null;
     if (isLocalPath(path)) {
@@ -254,9 +234,14 @@ const ReviewDetail = () => {
         </span>
       );
     }
-    const url = fullUrl(path);
+    const rawUrl = fileUrl(path);
+    const isPDF = rawUrl.toLowerCase().includes('.pdf') || path.includes('.pdf');
+    // Use Google Docs viewer for PDFs to avoid Edge/browser compatibility issues
+    const viewUrl = isPDF
+      ? `https://docs.google.com/viewer?url=${encodeURIComponent(rawUrl)}&embedded=true`
+      : rawUrl;
     return (
-      <a href={url} target="_blank" rel="noreferrer"
+      <a href={viewUrl} target="_blank" rel="noreferrer"
         className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700 transition-colors">
         👁️ View{label}
       </a>
