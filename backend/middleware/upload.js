@@ -23,17 +23,16 @@ if (useCloudinary) {
   storage = new CloudinaryStorage({
     cloudinary,
     params: (_req, file) => {
-      const isImage = file.mimetype.startsWith('image/');
       const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       return {
         folder: 'erp/requirements',
-        // Use 'image' for images, 'raw' for everything else
-        // For PDFs use resource_type 'image' which allows inline browser viewing
         resource_type: 'auto',
         public_id: uniqueName,
-        use_filename: true,        // preserve original filename
-        unique_filename: true,     // add unique suffix
+        use_filename: true,
+        unique_filename: true,
         overwrite: false,
+        access_mode: 'public',  // ensure publicly accessible
+        type: 'upload',         // standard public upload
       };
     },
   });

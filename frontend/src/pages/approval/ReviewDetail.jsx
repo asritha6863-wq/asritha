@@ -235,13 +235,8 @@ const ReviewDetail = () => {
       );
     }
     const rawUrl = fileUrl(path);
-    const isPDF = rawUrl.toLowerCase().includes('.pdf') || path.includes('.pdf');
-    // Use Google Docs viewer for PDFs to avoid Edge/browser compatibility issues
-    const viewUrl = isPDF
-      ? `https://docs.google.com/viewer?url=${encodeURIComponent(rawUrl)}&embedded=true`
-      : rawUrl;
     return (
-      <a href={viewUrl} target="_blank" rel="noreferrer"
+      <a href={rawUrl} target="_blank" rel="noreferrer"
         className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700 transition-colors">
         👁️ View{label}
       </a>

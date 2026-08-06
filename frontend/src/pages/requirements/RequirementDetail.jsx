@@ -181,12 +181,8 @@ const RequirementDetail = () => {
                         </p>
                       </div>
                     </div>
-                    {(() => {
-                      const rawUrl = fileUrl(att.path);
-                      const isPDF = rawUrl.toLowerCase().includes('.pdf');
-                      const viewUrl = isPDF
-                        ? `https://docs.google.com/viewer?url=${encodeURIComponent(rawUrl)}&embedded=true`
-                        : rawUrl;
+    {(() => {
+                      const viewUrl = fileUrl(att.path);
                       return (
                         <a href={viewUrl} target="_blank" rel="noreferrer"
                            className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700 shrink-0">
