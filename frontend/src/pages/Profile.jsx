@@ -40,8 +40,17 @@ const Profile = () => {
     setPhotoMessage('');
     setPhotoError('');
     try {
-      await authService.uploadMyAvatar(photoFile);
-      await refreshUser();
+      const { data } = await authService.uploadMyAvatar(photoFile);
+      // Refresh context so navbar and everywhere else updates
+      const updatedUser = await refreshUser();
+      // Build the preview URL from the response so photo shows immediately
+      const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+      const newSrc = data?.profileImage
+        ? (data.profileImage.startsWith('http') ? data.profileImage : `${BASE_URL}/${data.profileImage}`)
+        : (updatedUser?.profileImage
+            ? (updatedUser.profileImage.startsWith('http') ? updatedUser.profileImage : `${BASE_URL}/${updatedUser.profileImage}`)
+            : '');
+      setPhotoPreview(newSrc);
       setPhotoMessage('Profile photo updated!');
       setPhotoFile(null);
     } catch (err) {
@@ -51,7 +60,13 @@ const Profile = () => {
     }
   };
 
-  const currentAvatar = photoPreview || getAvatarSrc(user?.profileImage);
+  // Show local preview first; fall back to saved image from context
+  const BASE_URL_AVATAR = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  const getAvatarUrl = (img) => {
+    if (!img) return null;
+    return img.startsWith('http') ? img : `${BASE_URL_AVATAR}/${img}`;
+  };
+  const currentAvatar = photoPreview || getAvatarUrl(user?.profileImage);
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '?';
 
   // ── Profile info ──────────────────────────────────────────────────────────
