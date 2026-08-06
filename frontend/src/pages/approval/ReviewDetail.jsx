@@ -433,18 +433,31 @@ const ReviewDetail = () => {
           <Section title={`Attachments (${req.attachments?.length || 0})`}>
             {!req.attachments?.length ? <p className="text-sm text-slate-400 italic">No attachments.</p> : (
               <div className="space-y-2">
-                {req.attachments.map(att => (
-                  <div key={att._id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-xl">📄</span>
-                      <div>
-                        <p className="text-sm font-medium text-slate-800">{att.originalName}</p>
-                        <p className="text-xs text-slate-500">{fmtSize(att.size)}</p>
+                {req.attachments.map(att => {
+                  const isPDF = att.mimeType === 'application/pdf' || att.originalName?.toLowerCase().endsWith('.pdf');
+                  const isImage = att.mimeType?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.originalName);
+                  return (
+                    <div key={att._id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xl">{isPDF ? '📄' : isImage ? '🖼️' : '📎'}</span>
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">{att.originalName}</p>
+                          <p className="text-xs text-slate-500">{fmtSize(att.size)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4 shrink-0">
+                        {(isPDF || isImage) && (
+                          <a href={`${baseUrl}/${att.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">
+                            👁️ View
+                          </a>
+                        )}
+                        <a href={`${baseUrl}/${att.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">
+                          ⬇️ Download
+                        </a>
                       </div>
                     </div>
-                    <a href={`${baseUrl}/${att.path}`} target="_blank" rel="noreferrer" download className="ml-4 shrink-0 text-xs font-medium text-navy-600 hover:underline">Download</a>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Section>
@@ -521,10 +534,16 @@ const ReviewDetail = () => {
                         return (
                           <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50' : ''}`}>
                             {q?.quotationFile
-                              ? <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer" download
-                                  className="inline-flex items-center gap-1 rounded-md bg-navy-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-navy-700">
-                                  📄 View PDF
-                                </a>
+                              ? <div className="flex items-center gap-2">
+                                  <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer"
+                                    className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-pink-700">
+                                    👁️ View
+                                  </a>
+                                  <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer" download
+                                    className="inline-flex items-center gap-1 rounded-md bg-navy-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-navy-700">
+                                    ⬇️ Save
+                                  </a>
+                                </div>
                               : <span className="text-slate-400 text-xs">Not uploaded</span>
                             }
                           </td>
@@ -557,7 +576,10 @@ const ReviewDetail = () => {
                             <p className="text-xs text-slate-400">{fmtSize(q.size)}</p>
                           </div>
                         </div>
-                        <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
+                        <div className="flex items-center gap-2 ml-4 shrink-0">
+                          <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pink-600 hover:underline">👁️ View</a>
+                          <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-navy-600 hover:underline">⬇️ Download</a>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -580,9 +602,10 @@ const ReviewDetail = () => {
                           <p className="text-xs text-slate-500">{fmtSize(q.size)}</p>
                         </div>
                       </div>
-                      <div className="flex gap-3 ml-4 shrink-0">
-                        <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">Download</a>
-                        {isSEQuotPending && <button onClick={() => removeQuotExisting(q._id)} className="text-xs font-medium text-red-600 hover:underline">Remove</button>}
+                      <div className="flex gap-2 ml-4 shrink-0">
+                        <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                        <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                        {isSEQuotPending && <button onClick={() => removeQuotExisting(q._id)} className="text-xs font-medium text-red-600 hover:underline">🗑️ Remove</button>}
                       </div>
                     </div>
                   ))}
@@ -721,7 +744,10 @@ const ReviewDetail = () => {
                       <p className="text-xs text-slate-500">{fmtSize(req.purchaseOrder.document.size)} · Original (prepared by SE)</p>
                     </div>
                   </div>
-                  <a href={`${baseUrl}/${req.purchaseOrder.document.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">Download</a>
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                    <a href={`${baseUrl}/${req.purchaseOrder.document.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                    <a href={`${baseUrl}/${req.purchaseOrder.document.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-slate-400 italic mb-3">No PO document uploaded yet.</p>
@@ -744,7 +770,10 @@ const ReviewDetail = () => {
                       )}
                     </div>
                   </div>
-                  <a href={`${baseUrl}/${req.purchaseOrder.signedDocument.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">Download Signed</a>
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                    <a href={`${baseUrl}/${req.purchaseOrder.signedDocument.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View Signed</a>
+                    <a href={`${baseUrl}/${req.purchaseOrder.signedDocument.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                  </div>
                 </div>
               )}
               {isSEPOPending && (
@@ -787,7 +816,10 @@ const ReviewDetail = () => {
                         <p className="text-xs text-slate-500">{fmtSize(req.grn.document.size)}</p>
                       </div>
                     </div>
-                    <a href={`${baseUrl}/${req.grn.document.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">Download</a>
+                    <div className="flex items-center gap-2 ml-4 shrink-0">
+                      <a href={`${baseUrl}/${req.grn.document.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                      <a href={`${baseUrl}/${req.grn.document.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
                     {req.grn.receivedAt && <div><span className="text-slate-400">Received: </span><span className="font-semibold">{new Date(req.grn.receivedAt).toLocaleDateString()}</span></div>}
@@ -821,7 +853,10 @@ const ReviewDetail = () => {
                         {req.invoiceNumber && <p className="text-xs text-slate-500">Inv# {req.invoiceNumber} · {req.invoiceDate ? new Date(req.invoiceDate).toLocaleDateString() : ''}</p>}
                       </div>
                     </div>
-                    <a href={`${baseUrl}/${req.supplierInvoice.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">Download</a>
+                    <div className="flex items-center gap-2 ml-4 shrink-0">
+                      <a href={`${baseUrl}/${req.supplierInvoice.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                      <a href={`${baseUrl}/${req.supplierInvoice.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                    </div>
                   </div>
                   {req.invoiceAmount && <div className="text-xs"><span className="text-slate-400">Invoice Amount: </span><span className="font-bold text-slate-700">AED {req.invoiceAmount.toLocaleString()}</span></div>}
                 </div>
