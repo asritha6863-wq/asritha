@@ -106,8 +106,13 @@ exports.getQueue = asyncHandler(async (req, res) => {
 
   if (!step) return res.status(200).json({ success: true, count: 0, total: 0, pages: 1, requirements: [] });
 
-  // MD, Accountant, Chairman, Admin see across departments; Department Directors/Managers filter by own dept
-  const wideRoles = [ROLES.MANAGING_DIRECTOR, ROLES.ACCOUNTANT, ROLES.CHAIRMAN, ROLES.ADMIN];
+  // MD, BC, Accountant, FM, JA, Chairman, Admin see across all departments
+  // Department Directors/Managers filter by own dept only
+  const wideRoles = [
+    ROLES.MANAGING_DIRECTOR, ROLES.BUDGET_CONTROLLER,
+    ROLES.ACCOUNTANT, ROLES.FINANCE_MANAGER, ROLES.JUNIOR_ACCOUNTANT,
+    ROLES.CHAIRMAN, ROLES.ADMIN,
+  ];
   const deptFilter = (!wideRoles.includes(req.user.role) && req.user.department)
     ? { department: req.user.department }
     : {};
@@ -148,7 +153,11 @@ exports.getQueue = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getApprovalStats = asyncHandler(async (req, res) => {
   const step = getStep(req.user.role);
-  const wideRoles = [ROLES.MANAGING_DIRECTOR, ROLES.ACCOUNTANT, ROLES.CHAIRMAN, ROLES.ADMIN];
+  const wideRoles = [
+    ROLES.MANAGING_DIRECTOR, ROLES.BUDGET_CONTROLLER,
+    ROLES.ACCOUNTANT, ROLES.FINANCE_MANAGER, ROLES.JUNIOR_ACCOUNTANT,
+    ROLES.CHAIRMAN, ROLES.ADMIN,
+  ];
   const deptFilter = (!wideRoles.includes(req.user.role) && req.user.department)
     ? { department: req.user.department }
     : {};

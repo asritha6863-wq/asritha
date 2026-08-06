@@ -225,8 +225,7 @@ const POSignUpload = () => {
                 )}
               </div>
             </div>
-            <a href={`${fileUrl(signedPO.path)}`} target="_blank" rel="noreferrer" download
-               className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
+            <a href={`${fileUrl(signedPO.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
           </div>
         )}
 

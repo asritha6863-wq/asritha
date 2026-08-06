@@ -32,7 +32,7 @@ const DocRow = ({ label, doc, signedNote, baseUrl }) => (
       </div>
     </div>
     {doc
-      ? <a href={`${fileUrl(doc.path)}`} target="_blank" rel="noreferrer" download className="shrink-0 text-xs font-semibold text-navy-600 hover:underline">Download</a>
+      ? <a href={`${fileUrl(doc.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
       : <span className="text-xs text-red-500 font-semibold">Missing</span>
     }
   </div>
@@ -210,8 +210,7 @@ const InvoiceUpload = () => {
                 {req.invoiceNumber && <p className="text-xs text-slate-500">Inv# {req.invoiceNumber}</p>}
               </div>
             </div>
-            <a href={`${fileUrl(existingInvoice.path)}`} target="_blank" rel="noreferrer" download
-               className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
+            <a href={`${fileUrl(existingInvoice.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
           </div>
         )}
 

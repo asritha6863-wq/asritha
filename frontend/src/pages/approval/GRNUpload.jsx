@@ -146,8 +146,7 @@ const GRNUpload = () => {
                 <span className="text-xs text-emerald-600 font-semibold">✍️ Signed</span>
               )}
             </div>
-            <a href={`${fileUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" download
-               className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
+            <a href={`${fileUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
           </div>
         </div>
       )}
@@ -203,8 +202,7 @@ const GRNUpload = () => {
                 <p className="text-xs text-slate-500">{fmt(existingGRN.size)}</p>
               </div>
             </div>
-            <a href={`${fileUrl(existingGRN.path)}`} target="_blank" rel="noreferrer" download
-               className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
+            <a href={`${fileUrl(existingGRN.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
           </div>
         )}
 

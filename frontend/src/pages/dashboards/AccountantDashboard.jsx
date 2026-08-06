@@ -363,7 +363,7 @@ function ThreeWayMatchModal({ req, onClose, onApprove, onReject, loading }) {
             {[['📄 Purchase Order',req.purchaseOrder?.document,'PO'],['📦 GRN',req.grn?.document,'GRN'],['🧾 Invoice',req.supplierInvoice,'Invoice']].map(([label,doc,name])=>(
               <div key={name} className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm font-semibold text-slate-700">{label}</span>
-                {doc ? <a href={`${fileUrl(doc.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-slate-600 hover:underline">View / Download</a>
+                {doc ? <a href={`${fileUrl(doc.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
                      : <span className="text-xs text-red-500 font-semibold">Missing</span>}
               </div>
             ))}

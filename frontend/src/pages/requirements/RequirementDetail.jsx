@@ -181,7 +181,7 @@ const RequirementDetail = () => {
                         </p>
                       </div>
                     </div>
-                    <a href={`${fileUrl(att.path)}`} target="_blank" rel="noreferrer" download className="ml-4 shrink-0 text-xs font-medium text-navy-600 hover:underline">Download</a>
+                    <a href={`${fileUrl(att.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
                   </div>
                 ))}
               </div>

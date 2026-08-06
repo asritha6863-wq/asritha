@@ -256,16 +256,10 @@ const ReviewDetail = () => {
     }
     const url = fullUrl(path);
     return (
-      <div className="flex items-center gap-2">
-        <a href={url} target="_blank" rel="noreferrer"
-          className="text-xs font-medium text-pink-600 hover:underline">
-          👁️ View{label}
-        </a>
-        <a href={url} target="_blank" rel="noreferrer"
-          className="text-xs font-medium text-navy-600 hover:underline">
-          ⬇️ Download
-        </a>
-      </div>
+      <a href={url} target="_blank" rel="noreferrer"
+        className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700 transition-colors">
+        👁️ View{label}
+      </a>
     );
   };
 

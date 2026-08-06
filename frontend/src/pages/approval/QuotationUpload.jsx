@@ -88,8 +88,7 @@ const QuoteCard = ({ label, color, data, onChange, onFile, fileObj, existingFile
                 <p className="text-xs text-slate-400">{fmt(existingFile.size)}</p>
               </div>
             </div>
-            <a href={`${fileUrl(existingFile.path)}`} target="_blank" rel="noreferrer" download
-               className="text-xs font-semibold text-navy-600 hover:underline shrink-0 ml-2">View</a>
+            <a href={`${fileUrl(existingFile.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
           </div>
         )}
         {!readOnly && (
