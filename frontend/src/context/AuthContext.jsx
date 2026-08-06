@@ -17,6 +17,8 @@ export const AuthProvider = ({ children }) => {
       }
       try {
         const { data } = await authService.getMe();
+        // Always use fresh data from server, clear any stale localStorage user
+        localStorage.setItem('erp_user', JSON.stringify(data.user));
         setUser(data.user);
       } catch (err) {
         localStorage.removeItem('erp_token');
@@ -31,9 +33,11 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     const { data } = await authService.login(email, password);
     localStorage.setItem('erp_token', data.token);
-    localStorage.setItem('erp_user', JSON.stringify(data.user));
-    setUser(data.user);
-    return data.user;
+    // Fetch full populated user (department, designation objects) via getMe
+    const { data: meData } = await authService.getMe();
+    localStorage.setItem('erp_user', JSON.stringify(meData.user));
+    setUser(meData.user);
+    return meData.user;
   }, []);
 
   const logout = useCallback(async () => {
