@@ -4,10 +4,17 @@ import authService from '../services/authService';
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // Seed from localStorage immediately so UI doesn't flash blank,
+  // but bootstrap will always overwrite with fresh populated data from getMe
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('erp_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  });
   const [loading, setLoading] = useState(true); // true while we check for an existing session
 
-  // On mount, if a token exists, fetch the current user to validate/hydrate the session.
+  // On mount, always fetch fresh fully-populated user from server (dept obj, designation obj, etc.)
   useEffect(() => {
     const bootstrap = async () => {
       const token = localStorage.getItem('erp_token');
@@ -17,12 +24,13 @@ export const AuthProvider = ({ children }) => {
       }
       try {
         const { data } = await authService.getMe();
-        // Always use fresh data from server, clear any stale localStorage user
+        // Overwrite any stale localStorage with fresh populated data
         localStorage.setItem('erp_user', JSON.stringify(data.user));
         setUser(data.user);
       } catch (err) {
         localStorage.removeItem('erp_token');
         localStorage.removeItem('erp_user');
+        setUser(null);
       } finally {
         setLoading(false);
       }

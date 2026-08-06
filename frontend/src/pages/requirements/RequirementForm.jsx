@@ -182,7 +182,13 @@ const RequirementForm = () => {
             <input className="input-field bg-slate-50" value={user?.department?.departmentName || '—'} readOnly />
           </Field>
           <Field label="Designation">
-            <input className="input-field bg-slate-50" value={user?.designation?.designationName || '—'} readOnly />
+            <input className="input-field bg-slate-50"
+              value={
+                typeof user?.designation === 'object'
+                  ? (user.designation?.designationName || 'Staff')
+                  : 'Staff'
+              }
+              readOnly />
           </Field>
           <Field label="Request Date">
             <input className="input-field bg-slate-50" value={new Date().toLocaleDateString()} readOnly />

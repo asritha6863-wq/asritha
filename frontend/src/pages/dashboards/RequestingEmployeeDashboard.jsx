@@ -179,7 +179,11 @@ const RequestingEmployeeDashboard = () => {
               <span className="font-medium text-pink-700">{user?.department?.departmentName || '—'}</span>
             </span>
             <span><span className="font-semibold text-slate-400">Designation </span>
-              <span className="font-medium text-pink-700">{user?.designation?.designationName || '—'}</span>
+              <span className="font-medium text-pink-700">
+                {typeof user?.designation === 'object'
+                  ? (user.designation?.designationName || 'Staff')
+                  : 'Staff'}
+              </span>
             </span>
             <span><span className="font-semibold text-slate-400">Email </span>{user?.email}</span>
           </div>
