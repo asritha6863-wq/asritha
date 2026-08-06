@@ -1,6 +1,6 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const multer  = require('multer');
+const path    = require('path');
+const fs      = require('fs');
 const ErrorResponse = require('../utils/ErrorResponse');
 
 const ALLOWED_MIMES = [
@@ -13,17 +13,39 @@ const ALLOWED_MIMES = [
   'image/png',
 ];
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    const dir = path.join(__dirname, '..', 'uploads', 'requirements');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${path.extname(file.originalname)}`);
-  },
-});
+// ── Cloudinary storage (used in production when CLOUDINARY_URL is set) ────────
+const useCloudinary = !!process.env.CLOUDINARY_URL;
+
+let storage;
+if (useCloudinary) {
+  const cloudinary = require('../config/cloudinary');
+  const { CloudinaryStorage } = require('multer-storage-cloudinary');
+  storage = new CloudinaryStorage({
+    cloudinary,
+    params: (_req, file) => ({
+      folder: 'erp/requirements',
+      resource_type: 'auto', // supports pdf + images
+      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+      // Keep original filename accessible via original_filename
+      use_filename: false,
+      // Allow PDF delivery
+      format: undefined,
+    }),
+  });
+} else {
+  // Fallback: local disk storage
+  storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = path.join(__dirname, '..', 'uploads', 'requirements');
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      cb(null, `${unique}${path.extname(file.originalname)}`);
+    },
+  });
+}
 
 const upload = multer({
   storage,
@@ -34,12 +56,30 @@ const upload = multer({
   },
 });
 
+// Normalise uploaded file so controllers always see the same shape regardless of storage backend:
+//   file.path      → URL (Cloudinary) or local relative path
+//   file.filename  → public_id (Cloudinary) or disk filename
+const normalizeFiles = (req, _res, next) => {
+  const normalize = (f) => {
+    if (useCloudinary) {
+      f.path     = f.path;        // Cloudinary already sets f.path = secure_url
+      f.filename = f.filename;    // public_id
+      f.originalPath = f.path;    // alias for controllers that use .path
+    } else {
+      f.path = `uploads/requirements/${f.filename}`;
+    }
+    return f;
+  };
+  if (req.files) req.files = req.files.map(normalize);
+  if (req.file)  req.file  = normalize(req.file);
+  next();
+};
+
 const handleUpload = (req, res, next) => {
-  // supports both array 'files' and named fields like q1File/q2File/q3File
   upload.any()(req, res, (err) => {
-    if (!err) return next();
+    if (!err) return normalizeFiles(req, res, next);
     if (err instanceof multer.MulterError) {
-      if (err.code === 'LIMIT_FILE_SIZE') return next(new ErrorResponse('File size exceeds 20 MB limit.', 400));
+      if (err.code === 'LIMIT_FILE_SIZE')  return next(new ErrorResponse('File size exceeds 20 MB limit.', 400));
       if (err.code === 'LIMIT_FILE_COUNT') return next(new ErrorResponse('Max 10 files per upload.', 400));
       return next(new ErrorResponse(err.message, 400));
     }

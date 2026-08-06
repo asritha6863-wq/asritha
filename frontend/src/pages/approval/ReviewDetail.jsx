@@ -223,6 +223,8 @@ const ReviewDetail = () => {
 
   const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
   const fmtSize = (b) => b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB`;
+  // Helper: build full URL from path (if path is already full URL like Cloudinary, use as-is)
+  const fullUrl = (path) => path?.startsWith('http') ? path : `${baseUrl}/${path}`;
 
   const isSEQuotPending   = user?.role === 'Senior Employee' && req.status === 'Quotation Pending';
   const isSEPOPending     = user?.role === 'Senior Employee' && req.status === 'PO Pending';
@@ -447,11 +449,11 @@ const ReviewDetail = () => {
                       </div>
                       <div className="flex items-center gap-2 ml-4 shrink-0">
                         {(isPDF || isImage) && (
-                          <a href={`${baseUrl}/${att.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">
+                          <a href={`${fullUrl(att.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">
                             👁️ View
                           </a>
                         )}
-                        <a href={`${baseUrl}/${att.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">
+                        <a href={`${fullUrl(att.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">
                           ⬇️ Download
                         </a>
                       </div>
@@ -535,11 +537,11 @@ const ReviewDetail = () => {
                           <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50' : ''}`}>
                             {q?.quotationFile
                               ? <div className="flex items-center gap-2">
-                                  <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer"
+                                  <a href={`${fullUrl(q.quotationFile.path)}`} target="_blank" rel="noreferrer"
                                     className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-pink-700">
                                     👁️ View
                                   </a>
-                                  <a href={`${baseUrl}/${q.quotationFile.path}`} target="_blank" rel="noreferrer" download
+                                  <a href={`${fullUrl(q.quotationFile.path)}`} target="_blank" rel="noreferrer" download
                                     className="inline-flex items-center gap-1 rounded-md bg-navy-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-navy-700">
                                     ⬇️ Save
                                   </a>
@@ -577,8 +579,8 @@ const ReviewDetail = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 ml-4 shrink-0">
-                          <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pink-600 hover:underline">👁️ View</a>
-                          <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-navy-600 hover:underline">⬇️ Download</a>
+                          <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pink-600 hover:underline">👁️ View</a>
+                          <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-navy-600 hover:underline">⬇️ Download</a>
                         </div>
                       </div>
                     ))}
@@ -603,8 +605,8 @@ const ReviewDetail = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 ml-4 shrink-0">
-                        <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                        <a href={`${baseUrl}/${q.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                        <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                        <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
                         {isSEQuotPending && <button onClick={() => removeQuotExisting(q._id)} className="text-xs font-medium text-red-600 hover:underline">🗑️ Remove</button>}
                       </div>
                     </div>
@@ -745,8 +747,8 @@ const ReviewDetail = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <a href={`${baseUrl}/${req.purchaseOrder.document.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                    <a href={`${baseUrl}/${req.purchaseOrder.document.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                    <a href={`${fullUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                    <a href={`${fullUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
                   </div>
                 </div>
               ) : (
@@ -771,8 +773,8 @@ const ReviewDetail = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <a href={`${baseUrl}/${req.purchaseOrder.signedDocument.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View Signed</a>
-                    <a href={`${baseUrl}/${req.purchaseOrder.signedDocument.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                    <a href={`${fullUrl(req.purchaseOrder.signedDocument.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View Signed</a>
+                    <a href={`${fullUrl(req.purchaseOrder.signedDocument.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
                   </div>
                 </div>
               )}
@@ -817,8 +819,8 @@ const ReviewDetail = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4 shrink-0">
-                      <a href={`${baseUrl}/${req.grn.document.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                      <a href={`${baseUrl}/${req.grn.document.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                      <a href={`${fullUrl(req.grn.document.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                      <a href={`${fullUrl(req.grn.document.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
@@ -854,8 +856,8 @@ const ReviewDetail = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4 shrink-0">
-                      <a href={`${baseUrl}/${req.supplierInvoice.path}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                      <a href={`${baseUrl}/${req.supplierInvoice.path}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                      <a href={`${fullUrl(req.supplierInvoice.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
+                      <a href={`${fullUrl(req.supplierInvoice.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
                     </div>
                   </div>
                   {req.invoiceAmount && <div className="text-xs"><span className="text-slate-400">Invoice Amount: </span><span className="font-bold text-slate-700">AED {req.invoiceAmount.toLocaleString()}</span></div>}

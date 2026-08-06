@@ -724,7 +724,7 @@ exports.uploadQuotations = asyncHandler(async (req, res, next) => {
 
   const added = req.files.map(f => ({
     fileName: f.filename, originalName: f.originalname, mimeType: f.mimetype,
-    size: f.size, path: `uploads/requirements/${f.filename}`, uploadedBy: req.user._id,
+    size: f.size, path: f.path, uploadedBy: req.user._id,
   }));
   requirement.quotations.push(...added);
   requirement.updatedBy = req.user._id;
@@ -774,7 +774,7 @@ exports.uploadPurchaseOrder = asyncHandler(async (req, res, next) => {
     ...requirement.purchaseOrder,
     document: {
       fileName: f.filename, originalName: f.originalname, mimeType: f.mimetype,
-      size: f.size, path: `uploads/requirements/${f.filename}`, uploadedBy: req.user._id,
+      size: f.size, path: f.path, uploadedBy: req.user._id,
     },
   };
   requirement.updatedBy = req.user._id;
@@ -807,7 +807,7 @@ exports.uploadSignedPO = asyncHandler(async (req, res, next) => {
       originalName: f.originalname,
       mimeType:     f.mimetype,
       size:         f.size,
-      path:         `uploads/requirements/${f.filename}`,
+      path:         f.path,
       uploadedBy:   req.user._id,
     },
     signedAt:     new Date(),
@@ -842,7 +842,7 @@ exports.uploadGRN = asyncHandler(async (req, res, next) => {
   requirement.grn = {
     document: {
       fileName: f.filename, originalName: f.originalname, mimeType: f.mimetype,
-      size: f.size, path: `uploads/requirements/${f.filename}`, uploadedBy: req.user._id,
+      size: f.size, path: f.path, uploadedBy: req.user._id,
     },
     receivedAt:       receivedAt ? new Date(receivedAt) : new Date(),
     deliveryNote:     deliveryNote || '',
@@ -874,7 +874,7 @@ exports.uploadInvoice = asyncHandler(async (req, res, next) => {
   const { invoiceNumber, invoiceDate, invoiceAmount } = req.body;
   requirement.supplierInvoice = {
     fileName: f.filename, originalName: f.originalname, mimeType: f.mimetype,
-    size: f.size, path: `uploads/requirements/${f.filename}`, uploadedBy: req.user._id,
+    size: f.size, path: f.path, uploadedBy: req.user._id,
   };
   if (invoiceNumber) requirement.invoiceNumber = invoiceNumber;
   if (invoiceDate)   requirement.invoiceDate   = new Date(invoiceDate);
@@ -994,7 +994,7 @@ exports.saveQuotationComparison = asyncHandler(async (req, res, next) => {
       q.quotationFile = {
         fileName: f.filename, originalName: f.originalname,
         mimeType: f.mimetype, size: f.size,
-        path: `uploads/requirements/${f.filename}`,
+        path: f.path,
         uploadedBy: req.user._id,
       };
     } else if (requirement.quotationComparison?.[key]?.quotationFile) {

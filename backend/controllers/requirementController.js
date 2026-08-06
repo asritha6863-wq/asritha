@@ -178,7 +178,7 @@ exports.uploadAttachments = asyncHandler(async (req, res, next) => {
     originalName: f.originalname,
     mimeType: f.mimetype,
     size: f.size,
-    path: `uploads/requirements/${f.filename}`,
+    path: f.path,
     uploadedBy: req.user._id,
   }));
   requirement.attachments.push(...added);
