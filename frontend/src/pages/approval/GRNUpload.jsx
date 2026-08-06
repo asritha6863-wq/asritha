@@ -4,6 +4,7 @@
  * Accessible when status is "GRN Pending".
  */
 import { useState, useEffect } from 'react';
+import { fileUrl } from '../../utils/fileUrl';
 import { useParams, useNavigate } from 'react-router-dom';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
@@ -90,7 +91,6 @@ const GRNUpload = () => {
   };
 
   const fmt     = (b) => b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048576).toFixed(1)} MB`;
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
   if (loading) return (
     <div className="flex h-64 items-center justify-center">
@@ -146,7 +146,7 @@ const GRNUpload = () => {
                 <span className="text-xs text-emerald-600 font-semibold">✍️ Signed</span>
               )}
             </div>
-            <a href={`${baseUrl}/${req.purchaseOrder.document.path}`} target="_blank" rel="noreferrer" download
+            <a href={`${fileUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" download
                className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
           </div>
         </div>
@@ -203,7 +203,7 @@ const GRNUpload = () => {
                 <p className="text-xs text-slate-500">{fmt(existingGRN.size)}</p>
               </div>
             </div>
-            <a href={`${baseUrl}/${existingGRN.path}`} target="_blank" rel="noreferrer" download
+            <a href={`${fileUrl(existingGRN.path)}`} target="_blank" rel="noreferrer" download
                className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
           </div>
         )}

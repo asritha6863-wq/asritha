@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { fileUrl } from '../../utils/fileUrl';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useAuth from '../../hooks/useAuth';
@@ -362,7 +363,7 @@ function ThreeWayMatchModal({ req, onClose, onApprove, onReject, loading }) {
             {[['📄 Purchase Order',req.purchaseOrder?.document,'PO'],['📦 GRN',req.grn?.document,'GRN'],['🧾 Invoice',req.supplierInvoice,'Invoice']].map(([label,doc,name])=>(
               <div key={name} className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm font-semibold text-slate-700">{label}</span>
-                {doc ? <a href={`${baseUrl}/${doc.path}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-slate-600 hover:underline">View / Download</a>
+                {doc ? <a href={`${fileUrl(doc.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-slate-600 hover:underline">View / Download</a>
                      : <span className="text-xs text-red-500 font-semibold">Missing</span>}
               </div>
             ))}

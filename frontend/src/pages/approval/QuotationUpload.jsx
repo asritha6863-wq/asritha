@@ -8,6 +8,7 @@
  *  2. Submit to Dept Manager      — saves comparison then submits
  */
 import { useState, useEffect, useRef } from 'react';
+import { fileUrl } from '../../utils/fileUrl';
 import { useParams, useNavigate } from 'react-router-dom';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
@@ -87,7 +88,7 @@ const QuoteCard = ({ label, color, data, onChange, onFile, fileObj, existingFile
                 <p className="text-xs text-slate-400">{fmt(existingFile.size)}</p>
               </div>
             </div>
-            <a href={`${baseUrl}/${existingFile.path}`} target="_blank" rel="noreferrer" download
+            <a href={`${fileUrl(existingFile.path)}`} target="_blank" rel="noreferrer" download
                className="text-xs font-semibold text-navy-600 hover:underline shrink-0 ml-2">View</a>
           </div>
         )}
@@ -112,7 +113,6 @@ const QuoteCard = ({ label, color, data, onChange, onFile, fileObj, existingFile
 const QuotationUpload = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api','') || 'http://localhost:5000';
 
   const [req,       setReq]       = useState(null);
   const [loading,   setLoading]   = useState(true);

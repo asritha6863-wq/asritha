@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { fileUrl } from '../../utils/fileUrl';
 import { useParams, useNavigate } from 'react-router-dom';
 import requirementService from '../../services/requirementService';
 import StatusBadge from '../../components/requirements/StatusBadge';
@@ -88,7 +89,6 @@ const RequirementDetail = () => {
   }
 
   if (!req) return null;
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -181,7 +181,7 @@ const RequirementDetail = () => {
                         </p>
                       </div>
                     </div>
-                    <a href={`${baseUrl}/${att.path}`} target="_blank" rel="noreferrer" download className="ml-4 shrink-0 text-xs font-medium text-navy-600 hover:underline">Download</a>
+                    <a href={`${fileUrl(att.path)}`} target="_blank" rel="noreferrer" download className="ml-4 shrink-0 text-xs font-medium text-navy-600 hover:underline">Download</a>
                   </div>
                 ))}
               </div>

@@ -8,6 +8,7 @@
  *  5. Click "Confirm & Send to SE"
  */
 import { useState, useEffect } from 'react';
+import { fileUrl } from '../../utils/fileUrl';
 import { useParams, useNavigate } from 'react-router-dom';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
@@ -95,7 +96,6 @@ const POSignUpload = () => {
   };
 
   const fmt     = (b) => b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048576).toFixed(1)} MB`;
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
   if (loading) return (
     <div className="flex h-64 items-center justify-center">
@@ -225,7 +225,7 @@ const POSignUpload = () => {
                 )}
               </div>
             </div>
-            <a href={`${baseUrl}/${signedPO.path}`} target="_blank" rel="noreferrer" download
+            <a href={`${fileUrl(signedPO.path)}`} target="_blank" rel="noreferrer" download
                className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
           </div>
         )}

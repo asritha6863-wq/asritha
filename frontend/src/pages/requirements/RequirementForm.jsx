@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { fileUrl } from '../../utils/fileUrl';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../hooks/useAuth';

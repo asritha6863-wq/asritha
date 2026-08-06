@@ -4,6 +4,7 @@
  * Accessible when status is "Payment Pending".
  */
 import { useState, useEffect } from 'react';
+import { fileUrl } from '../../utils/fileUrl';
 import { useParams, useNavigate } from 'react-router-dom';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
@@ -31,7 +32,7 @@ const DocRow = ({ label, doc, signedNote, baseUrl }) => (
       </div>
     </div>
     {doc
-      ? <a href={`${baseUrl}/${doc.path}`} target="_blank" rel="noreferrer" download className="shrink-0 text-xs font-semibold text-navy-600 hover:underline">Download</a>
+      ? <a href={`${fileUrl(doc.path)}`} target="_blank" rel="noreferrer" download className="shrink-0 text-xs font-semibold text-navy-600 hover:underline">Download</a>
       : <span className="text-xs text-red-500 font-semibold">Missing</span>
     }
   </div>
@@ -107,7 +108,6 @@ const InvoiceUpload = () => {
   };
 
   const fmt     = (b) => b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048576).toFixed(1)} MB`;
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
   if (loading) return (
     <div className="flex h-64 items-center justify-center">
@@ -210,7 +210,7 @@ const InvoiceUpload = () => {
                 {req.invoiceNumber && <p className="text-xs text-slate-500">Inv# {req.invoiceNumber}</p>}
               </div>
             </div>
-            <a href={`${baseUrl}/${existingInvoice.path}`} target="_blank" rel="noreferrer" download
+            <a href={`${fileUrl(existingInvoice.path)}`} target="_blank" rel="noreferrer" download
                className="text-xs font-semibold text-navy-600 hover:underline">Download</a>
           </div>
         )}

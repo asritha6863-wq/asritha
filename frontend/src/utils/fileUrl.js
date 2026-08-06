@@ -1,15 +1,22 @@
 /**
- * fileUrl.js
- * Returns the full URL for a stored file path.
- * Handles both local dev and production (Render).
+ * Build a safe file URL.
+ * - Cloudinary URLs (https://res.cloudinary.com/...) → returned as-is
+ *   with /image/upload/ → /raw/upload/ fix for PDFs
+ * - Local relative paths (uploads/...) → prefixed with backend base URL
  */
-const BACKEND = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace('/api', '')
-  : 'http://localhost:5000';
+const BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
-export const fileUrl = (filePath) => {
-  if (!filePath) return '';
-  // Remove leading slash if present to avoid double slash
-  const clean = filePath.startsWith('/') ? filePath.slice(1) : filePath;
-  return `${BACKEND}/${clean}`;
+export const fileUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) {
+    // Fix Cloudinary PDF stored under /image/ resource type → use /raw/ for correct delivery
+    if (path.includes('res.cloudinary.com') && path.includes('/image/upload/') &&
+        path.toLowerCase().includes('.pdf')) {
+      return path.replace('/image/upload/', '/raw/upload/');
+    }
+    return path;
+  }
+  return `${BASE}/${path}`;
 };
+
+export const isLocalPath = (path) => !!path && !path.startsWith('http');
