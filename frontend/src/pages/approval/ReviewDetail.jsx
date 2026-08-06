@@ -250,7 +250,7 @@ const ReviewDetail = () => {
     if (isLocalPath(path)) {
       return (
         <span className="text-xs text-slate-400 italic">
-          ⚠️ File unavailable (server redeployed — re-upload needed)
+          ⚠️ File unavailable — re-upload needed
         </span>
       );
     }
@@ -261,7 +261,7 @@ const ReviewDetail = () => {
           className="text-xs font-medium text-pink-600 hover:underline">
           👁️ View{label}
         </a>
-        <a href={url} target="_blank" rel="noreferrer" download
+        <a href={url} target="_blank" rel="noreferrer"
           className="text-xs font-medium text-navy-600 hover:underline">
           ⬇️ Download
         </a>
@@ -606,8 +606,7 @@ const ReviewDetail = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 ml-4 shrink-0">
-                          <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pink-600 hover:underline">👁️ View</a>
-                          <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-semibold text-navy-600 hover:underline">⬇️ Download</a>
+                          <FileLinks path={q.path} />
                         </div>
                       </div>
                     ))}
@@ -773,8 +772,7 @@ const ReviewDetail = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <a href={`${fullUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                    <a href={`${fullUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                    <FileLinks path={req.purchaseOrder.document.path} />
                   </div>
                 </div>
               ) : (
@@ -799,8 +797,7 @@ const ReviewDetail = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <a href={`${fullUrl(req.purchaseOrder.signedDocument.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View Signed</a>
-                    <a href={`${fullUrl(req.purchaseOrder.signedDocument.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                    <FileLinks path={req.purchaseOrder.signedDocument.path} label=" Signed" />
                   </div>
                 </div>
               )}
@@ -845,8 +842,7 @@ const ReviewDetail = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4 shrink-0">
-                      <a href={`${fullUrl(req.grn.document.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                      <a href={`${fullUrl(req.grn.document.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                      <FileLinks path={req.grn.document.path} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
@@ -882,8 +878,7 @@ const ReviewDetail = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4 shrink-0">
-                      <a href={`${fullUrl(req.supplierInvoice.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                      <a href={`${fullUrl(req.supplierInvoice.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                      <FileLinks path={req.supplierInvoice.path} />
                     </div>
                   </div>
                   {req.invoiceAmount && <div className="text-xs"><span className="text-slate-400">Invoice Amount: </span><span className="font-bold text-slate-700">AED {req.invoiceAmount.toLocaleString()}</span></div>}
