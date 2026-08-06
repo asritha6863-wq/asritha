@@ -85,7 +85,14 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // --- Static uploads ---
-app.use('/uploads', express.static('uploads'));
+const path = require('path');
+app.use('/uploads', (req, res, next) => {
+  // Let browsers open PDFs/images inline instead of forcing download
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (req.path.match(/\.(pdf)$/i)) res.setHeader('Content-Disposition', 'inline');
+  if (req.path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) res.setHeader('Content-Disposition', 'inline');
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 // --- Health check ---
 app.get('/api/health', (req, res) => {
