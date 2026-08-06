@@ -223,16 +223,50 @@ const ReviewDetail = () => {
 
   const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
   const fmtSize = (b) => b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB`;
-  // Helper: build full URL. For Cloudinary PDFs stored under /image/, rewrite to /raw/ for correct delivery
+
+  // Build full URL. Cloudinary URLs are full https:// links — use as-is.
+  // Local paths (uploads/...) served from backend — may not exist on Render after redeploy.
   const fullUrl = (path) => {
     if (!path) return '';
-    if (!path.startsWith('http')) return `${baseUrl}/${path}`;
-    // Fix Cloudinary PDF URLs: /image/upload/ → /raw/upload/ for proper browser delivery
-    if (path.includes('res.cloudinary.com') && path.includes('/image/upload/') &&
-        (path.endsWith('.pdf') || path.includes('.pdf'))) {
-      return path.replace('/image/upload/', '/raw/upload/');
+    if (path.startsWith('http')) {
+      // Fix Cloudinary PDF stored under /image/ → rewrite to /raw/ for proper delivery
+      if (path.includes('res.cloudinary.com') && path.includes('/image/upload/') &&
+          path.toLowerCase().includes('.pdf')) {
+        return path.replace('/image/upload/', '/raw/upload/');
+      }
+      return path;
     }
-    return path;
+    return `${baseUrl}/${path}`;
+  };
+
+  // Returns true if path is a live Cloudinary URL (safe to view/download)
+  const isCloudinary = (path) => path && path.includes('res.cloudinary.com');
+  // Local paths on Render may be gone — warn user instead of showing broken link
+  const isLocalPath = (path) => path && !path.startsWith('http');
+
+  // Render a View/Download pair, or a "not available" notice for dead local files
+  const FileLinks = ({ path, label = '' }) => {
+    if (!path) return null;
+    if (isLocalPath(path)) {
+      return (
+        <span className="text-xs text-slate-400 italic">
+          ⚠️ File unavailable (server redeployed — re-upload needed)
+        </span>
+      );
+    }
+    const url = fullUrl(path);
+    return (
+      <div className="flex items-center gap-2">
+        <a href={url} target="_blank" rel="noreferrer"
+          className="text-xs font-medium text-pink-600 hover:underline">
+          👁️ View{label}
+        </a>
+        <a href={url} target="_blank" rel="noreferrer" download
+          className="text-xs font-medium text-navy-600 hover:underline">
+          ⬇️ Download
+        </a>
+      </div>
+    );
   };
 
   const isSEQuotPending   = user?.role === 'Senior Employee' && req.status === 'Quotation Pending';
@@ -457,14 +491,7 @@ const ReviewDetail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-4 shrink-0">
-                        {(isPDF || isImage) && (
-                          <a href={`${fullUrl(att.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">
-                            👁️ View
-                          </a>
-                        )}
-                        <a href={`${fullUrl(att.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">
-                          ⬇️ Download
-                        </a>
+                        <FileLinks path={att.path} />
                       </div>
                     </div>
                   );
@@ -545,16 +572,7 @@ const ReviewDetail = () => {
                         return (
                           <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50' : ''}`}>
                             {q?.quotationFile
-                              ? <div className="flex items-center gap-2">
-                                  <a href={`${fullUrl(q.quotationFile.path)}`} target="_blank" rel="noreferrer"
-                                    className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-pink-700">
-                                    👁️ View
-                                  </a>
-                                  <a href={`${fullUrl(q.quotationFile.path)}`} target="_blank" rel="noreferrer" download
-                                    className="inline-flex items-center gap-1 rounded-md bg-navy-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-navy-700">
-                                    ⬇️ Save
-                                  </a>
-                                </div>
+                              ? <FileLinks path={q.quotationFile.path} />
                               : <span className="text-slate-400 text-xs">Not uploaded</span>
                             }
                           </td>
@@ -614,8 +632,7 @@ const ReviewDetail = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 ml-4 shrink-0">
-                        <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" className="text-xs font-medium text-pink-600 hover:underline">👁️ View</a>
-                        <a href={`${fullUrl(q.path)}`} target="_blank" rel="noreferrer" download className="text-xs font-medium text-navy-600 hover:underline">⬇️ Download</a>
+                        <FileLinks path={q.path} />
                         {isSEQuotPending && <button onClick={() => removeQuotExisting(q._id)} className="text-xs font-medium text-red-600 hover:underline">🗑️ Remove</button>}
                       </div>
                     </div>
