@@ -1,13 +1,19 @@
 /**
- * Build a safe file URL for browser viewing.
- * Cloudinary URLs → return as-is
- * Local paths → prefix with backend base URL
+ * Build a proxy URL for file viewing.
+ * All files go through the backend proxy (/api/files/proxy?url=...)
+ * which fetches from Cloudinary using server credentials, bypassing access restrictions.
+ * Local paths are served directly from the backend static files.
  */
-const BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const BASE = API.replace('/api', '');
 
 export const fileUrl = (path) => {
   if (!path) return '';
-  if (path.startsWith('http')) return path;
+  // Full Cloudinary URL — proxy through backend
+  if (path.startsWith('http')) {
+    return `${API}/files/proxy?url=${encodeURIComponent(path)}`;
+  }
+  // Local path — serve directly from backend
   return `${BASE}/${path}`;
 };
 

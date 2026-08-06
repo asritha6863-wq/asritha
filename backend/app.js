@@ -15,6 +15,7 @@ const designationRoutes = require('./routes/designationRoutes');
 const requirementRoutes = require('./routes/requirementRoutes');
 const approvalRoutes = require('./routes/approvalRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 
@@ -107,6 +108,7 @@ app.use('/api/admin/designations', designationRoutes);
 app.use('/api/requirements', requirementRoutes);
 app.use('/api/approval', approvalRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/files', fileRoutes);
 
 // --- Error handling (must be last) ---
 app.use(notFound);
