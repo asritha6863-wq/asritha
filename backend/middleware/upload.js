@@ -23,23 +23,17 @@ if (useCloudinary) {
   storage = new CloudinaryStorage({
     cloudinary,
     params: (_req, file) => {
-      const isPDF = file.mimetype === 'application/pdf';
-      const isDoc = ['application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ].includes(file.mimetype);
       const isImage = file.mimetype.startsWith('image/');
-      // Use original file extension in public_id so Cloudinary sets correct Content-Type
-      const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
       const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       return {
         folder: 'erp/requirements',
-        resource_type: isImage ? 'image' : 'raw',
-        // Include extension in public_id for raw files so browser knows content type
-        public_id: (isPDF || isDoc) ? `${uniqueName}.${ext}` : uniqueName,
-        use_filename: false,
-        format: isImage ? undefined : '', // don't auto-format
+        // Use 'image' for images, 'raw' for everything else
+        // For PDFs use resource_type 'image' which allows inline browser viewing
+        resource_type: 'auto',
+        public_id: uniqueName,
+        use_filename: true,        // preserve original filename
+        unique_filename: true,     // add unique suffix
+        overwrite: false,
       };
     },
   });
