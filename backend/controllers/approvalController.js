@@ -94,6 +94,9 @@ const findDeptHead = async (deptId) => {
   return (await findInDept(ROLES.DEPARTMENT_DIRECTOR, deptId)) || (await findAnyRole(ROLES.DEPARTMENT_DIRECTOR));
 };
 
+// Returns active DM in dept, or null if none exists (dept has no DM role)
+const findDeptManager = (deptId) => User.findOne({ role: ROLES.DEPARTMENT_MANAGER, department: deptId, isActive: true });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/approval/queue
 // ─────────────────────────────────────────────────────────────────────────────
@@ -240,12 +243,32 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
   const total = requirement.estimatedTotalPrice || 0;
   let nextStatus = '', nextApprover = null, nextApproverRole = '', successMsg = '', note = req.body.note || '';
 
-  // ── SE: initial review → DM ───────────────────────────────────────────────
+  // ── SE: initial review → DM (or Dept Head if no DM in dept) ─────────────
   if (req.user.role === ROLES.SENIOR_EMPLOYEE && prev === 'Submitted') {
-    nextStatus       = 'Under Review';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_MANAGER, requirement.department);
-    nextApproverRole = ROLES.DEPARTMENT_MANAGER;
-    successMsg       = 'Forwarded to Department Manager.';
+    const dm = await findDeptManager(requirement.department);
+    if (dm) {
+      // Dept has an active DM → normal flow
+      nextStatus       = 'Under Review';
+      nextApprover     = dm;
+      nextApproverRole = ROLES.DEPARTMENT_MANAGER;
+      successMsg       = 'Forwarded to Department Manager.';
+    } else {
+      // No DM in this dept → skip straight to budget check path via Dept Head
+      // Budget amount determines routing
+      if (total <= DM_THRESHOLD) {
+        nextStatus       = 'Quotation Pending';
+        nextApprover     = await findInDept(ROLES.SENIOR_EMPLOYEE, requirement.department);
+        nextApproverRole = ROLES.SENIOR_EMPLOYEE;
+        successMsg       = `No Dept Manager — budget ≤ AED ${DM_THRESHOLD}. Forwarded directly for quotations.`;
+        note             = `No DM in dept — budget ≤ AED ${DM_THRESHOLD}, skipped to quotations. ${note}`.trim();
+      } else {
+        nextStatus       = 'Budget Check';
+        nextApprover     = await findAnyRole(ROLES.BUDGET_CONTROLLER);
+        nextApproverRole = ROLES.BUDGET_CONTROLLER;
+        successMsg       = 'No Dept Manager — forwarded to Budget Controller.';
+        note             = `No DM in dept — escalated to BC. Amount: AED ${total.toLocaleString()}. ${note}`.trim();
+      }
+    }
   }
 
   // ── DM: verify → budget routing ───────────────────────────────────────────
@@ -301,7 +324,7 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
     note             = `Approved by Dept Head — SE to upload quotations. ${note}`.trim();
   }
 
-  // ── SE: quotations submitted → DM review ─────────────────────────────────
+  // ── SE: quotations submitted → DM review (or Dept Head if no DM) ──────────
   else if (req.user.role === ROLES.SENIOR_EMPLOYEE && prev === 'Quotation Pending') {
     // Accept either old-style quotations[] OR new quotationComparison with at least one vendor filled
     const hasOldQuotations = requirement.quotations && requirement.quotations.length > 0;
@@ -310,11 +333,21 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
     if (!hasOldQuotations && !hasComparisonData) {
       return next(new ErrorResponse('Please fill in at least one quotation (Q1/Q2/Q3) before submitting.', 400));
     }
-    nextStatus       = 'Quotation Review';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_MANAGER, requirement.department);
-    nextApproverRole = ROLES.DEPARTMENT_MANAGER;
-    successMsg       = 'Quotations submitted to Department Manager for review.';
-    note             = `Quotations submitted by SE. ${note}`.trim();
+    const dm = await findDeptManager(requirement.department);
+    if (dm) {
+      nextStatus       = 'Quotation Review';
+      nextApprover     = dm;
+      nextApproverRole = ROLES.DEPARTMENT_MANAGER;
+      successMsg       = 'Quotations submitted to Department Manager for review.';
+      note             = `Quotations submitted by SE. ${note}`.trim();
+    } else {
+      // No DM — go straight to Dept Head for quotation approval
+      nextStatus       = 'Director Review2';
+      nextApprover     = await findDeptHead(requirement.department);
+      nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
+      successMsg       = 'No Dept Manager — quotations submitted directly to Dept Head for approval.';
+      note             = `No DM in dept — quotations submitted by SE directly to Dept Head. ${note}`.trim();
+    }
   }
 
   // ── DM: quotation review → Dept Head (Director Review2) ──────────────────
@@ -335,7 +368,7 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
     note             = `Quotations approved by Dept Head — SE to upload PO. ${note}`.trim();
   }
 
-  // ── SE: PO doc uploaded OR poDetails saved → DM reviews PO ─────────────
+  // ── SE: PO doc uploaded OR poDetails saved → DM reviews PO (or Dept Head if no DM) ─
   else if (req.user.role === ROLES.SENIOR_EMPLOYEE && prev === 'PO Pending') {
     // Allow either a file upload OR structured poDetails (form-based PO builder)
     const hasFile    = requirement.purchaseOrder && requirement.purchaseOrder.document;
@@ -343,11 +376,21 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
     if (!hasFile && !hasDetails) {
       return next(new ErrorResponse('Please prepare the Purchase Order (fill in PO details or upload a document) before submitting.', 400));
     }
-    nextStatus       = 'PO Review';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_MANAGER, requirement.department);
-    nextApproverRole = ROLES.DEPARTMENT_MANAGER;
-    successMsg       = 'Purchase Order submitted to Department Manager for review.';
-    note             = `PO document submitted by SE to DM. ${note}`.trim();
+    const dm = await findDeptManager(requirement.department);
+    if (dm) {
+      nextStatus       = 'PO Review';
+      nextApprover     = dm;
+      nextApproverRole = ROLES.DEPARTMENT_MANAGER;
+      successMsg       = 'Purchase Order submitted to Department Manager for review.';
+      note             = `PO submitted by SE to DM. ${note}`.trim();
+    } else {
+      // No DM → skip straight to Dept Head for PO sign
+      nextStatus       = 'PO Sign';
+      nextApprover     = await findDeptHead(requirement.department);
+      nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
+      successMsg       = 'No Dept Manager — PO submitted directly to Dept Head for signature.';
+      note             = `No DM in dept — PO submitted by SE directly to Dept Head. ${note}`.trim();
+    }
   }
 
   // ── DM: PO review → Dept Head to sign ────────────────────────────────────
@@ -384,16 +427,26 @@ exports.approveRequirement = asyncHandler(async (req, res, next) => {
     note             = `PO emailed to supplier by SE. Awaiting delivery. ${note}`.trim();
   }
 
-  // ── SE: GRN submitted → DM review ────────────────────────────────────────
+  // ── SE: GRN submitted → DM review (or Dept Head if no DM) ────────────────
   else if (req.user.role === ROLES.SENIOR_EMPLOYEE && prev === 'GRN Pending') {
     if (!requirement.grn || !requirement.grn.document) {
       return next(new ErrorResponse('Upload the Goods Receipt Note document before submitting.', 400));
     }
-    nextStatus       = 'GRN Review';
-    nextApprover     = await findInDept(ROLES.DEPARTMENT_MANAGER, requirement.department);
-    nextApproverRole = ROLES.DEPARTMENT_MANAGER;
-    successMsg       = 'GRN submitted to Department Manager for review.';
-    note             = `GRN submitted by SE. ${note}`.trim();
+    const dm = await findDeptManager(requirement.department);
+    if (dm) {
+      nextStatus       = 'GRN Review';
+      nextApprover     = dm;
+      nextApproverRole = ROLES.DEPARTMENT_MANAGER;
+      successMsg       = 'GRN submitted to Department Manager for review.';
+      note             = `GRN submitted by SE. ${note}`.trim();
+    } else {
+      // No DM → go straight to Dept Head for GRN approval
+      nextStatus       = 'GRN Review2';
+      nextApprover     = await findDeptHead(requirement.department);
+      nextApproverRole = ROLES.DEPARTMENT_DIRECTOR;
+      successMsg       = 'No Dept Manager — GRN submitted directly to Dept Head for approval.';
+      note             = `No DM in dept — GRN submitted by SE directly to Dept Head. ${note}`.trim();
+    }
   }
 
   // ── DM: GRN review → Dept Head ────────────────────────────────────────────
