@@ -9,6 +9,13 @@ export const authService = {
     api.put('/auth/change-password', { currentPassword, newPassword }),
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  uploadMyAvatar: (file) => {
+    const fd = new FormData();
+    fd.append('avatar', file);
+    return api.post('/auth/profile/avatar', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export default authService;

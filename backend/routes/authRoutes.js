@@ -8,9 +8,11 @@ const {
   changePassword,
   getMe,
   updateProfile,
+  uploadMyAvatar,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const validate = require('../middleware/validate');
+const handleAvatarUpload = require('../middleware/uploadAvatar');
 const {
   loginValidator,
   forgotPasswordValidator,
@@ -26,5 +28,6 @@ router.put('/reset-password/:token', resetPasswordValidator, validate, resetPass
 router.put('/change-password', protect, changePasswordValidator, validate, changePassword);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfileValidator, validate, updateProfile);
+router.post('/profile/avatar', protect, handleAvatarUpload, uploadMyAvatar);
 
 module.exports = router;

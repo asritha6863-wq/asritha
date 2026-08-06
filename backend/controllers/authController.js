@@ -4,6 +4,8 @@ const asyncHandler = require('../utils/asyncHandler');
 const ErrorResponse = require('../utils/ErrorResponse');
 const generateToken = require('../utils/generateToken');
 const sendEmail = require('../utils/sendEmail');
+const path = require('path');
+const fs   = require('fs');
 
 // @desc    Log in a user
 // @route   POST /api/auth/login
@@ -186,5 +188,31 @@ exports.updateProfile = asyncHandler(async (req, res, next) => {
     success: true,
     message: 'Profile updated successfully.',
     user,
+  });
+});
+
+// @desc    Upload own profile photo
+// @route   POST /api/auth/profile/avatar
+// @access  Private
+exports.uploadMyAvatar = asyncHandler(async (req, res, next) => {
+  if (!req.file) return next(new ErrorResponse('No file uploaded', 400));
+
+  const user = await User.findById(req.user.id);
+  if (!user) return next(new ErrorResponse('User not found', 404));
+
+  // Delete old avatar if it was a locally stored file
+  if (user.profileImage && user.profileImage.startsWith('uploads/avatars/')) {
+    const oldPath = path.join(__dirname, '..', user.profileImage);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+  user.profileImage = `uploads/avatars/${req.file.filename}`;
+  user.updatedBy = req.user.id;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile photo updated successfully.',
+    profileImage: user.profileImage,
   });
 });
