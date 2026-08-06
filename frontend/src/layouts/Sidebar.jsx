@@ -1,6 +1,8 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { ROLE_DASHBOARD_PATH, ROLES } from '../constants/roles';
 import useAuth from '../hooks/useAuth';
+
+const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const Ico = ({ d, className }) => (
@@ -34,6 +36,7 @@ const SectionLabel = ({ children }) => (
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 const Sidebar = ({ open, onClose }) => {
   const { user } = useAuth();
+  const location = useLocation();
   const dashboardPath = user ? ROLE_DASHBOARD_PATH[user.role] : '/dashboard';
   const isRE   = user?.role === ROLES.REQUESTING_EMPLOYEE;
   const isSE   = user?.role === ROLES.SENIOR_EMPLOYEE;
@@ -45,6 +48,14 @@ const Sidebar = ({ open, onClose }) => {
   const isFM   = user?.role === ROLES.FINANCE_MANAGER;
   const isJA   = user?.role === ROLES.JUNIOR_ACCOUNTANT;
   const isAdmin = user?.role === ROLES.ADMIN;
+
+  // Precise active check for query-param links (avoids multiple highlights)
+  const isExact = (path, qs) => {
+    if (!qs) return location.pathname === path && !location.search;
+    return location.pathname === path && location.search.includes(qs);
+  };
+  const qLink = (path, qs) =>
+    `${linkBase} ${isExact(path, qs) ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`;
 
   return (
     <>
@@ -94,15 +105,19 @@ const Sidebar = ({ open, onClose }) => {
                 <Ico d={ICONS.plus} className="h-5 w-5" />
                 New Requirement
               </NavLink>
-              <NavLink to="/requirements" end className={linkClasses}>
+              {/* Use qLink to avoid multiple items highlighting at once */}
+              <NavLink to="/requirements" end
+                className={qLink('/requirements', null)}>
                 <Ico d={ICONS.list} className="h-5 w-5" />
                 My Requirements
               </NavLink>
-              <NavLink to="/requirements?status=Draft" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`}>
+              <NavLink to="/requirements?status=Draft"
+                className={qLink('/requirements', 'status=Draft')}>
                 <Ico d={ICONS.draft} className="h-5 w-5" />
                 Drafts
               </NavLink>
-              <NavLink to="/requirements?status=Submitted" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`}>
+              <NavLink to="/requirements?status=Submitted"
+                className={qLink('/requirements', 'status=Submitted')}>
                 <Ico d={ICONS.clock} className="h-5 w-5" />
                 Pending Requests
               </NavLink>

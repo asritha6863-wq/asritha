@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import requirementService from '../../services/requirementService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
@@ -14,12 +14,24 @@ const PRIORITIES = ['Low','Medium','High','Urgent'];
 
 const MyRequirements = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Read ?status= from URL on mount / URL change
+  const urlStatus = new URLSearchParams(location.search).get('status') || '';
 
   const [data, setData] = useState({ requirements: [], total: 0, pages: 1 });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ search: '', status: '', priority: '', category: '', dateFrom: '', dateTo: '' });
-  const [activeFilters, setActiveFilters] = useState({});
+  const [filters, setFilters] = useState({ search: '', status: urlStatus, priority: '', category: '', dateFrom: '', dateTo: '' });
+  const [activeFilters, setActiveFilters] = useState(urlStatus ? { status: urlStatus } : {});
+
+  // When URL changes (e.g. clicking Drafts sidebar link), update filter
+  useEffect(() => {
+    const s = new URLSearchParams(location.search).get('status') || '';
+    setFilters(f => ({ ...f, status: s }));
+    setActiveFilters(s ? { status: s } : {});
+    setPage(1);
+  }, [location.search]);
 
   const fetchData = useCallback(async (pg = 1, f = activeFilters) => {
     setLoading(true);

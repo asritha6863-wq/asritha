@@ -60,7 +60,11 @@ const Navbar = ({ onMenuClick }) => {
     navigate('/notifications');
   };
 
+  const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '';
+  const avatarSrc = user?.profileImage
+    ? (user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}/${user.profileImage}`)
+    : null;
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-pink-100 bg-white px-4 sm:px-6">
@@ -94,9 +98,21 @@ const Navbar = ({ onMenuClick }) => {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-100"
+            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-pink-50"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-600 text-sm font-semibold text-white">
+            {/* Avatar — shows photo if set, else initials */}
+            {avatarSrc ? (
+              <img
+                src={avatarSrc}
+                alt={user?.firstName}
+                className="h-9 w-9 rounded-full object-cover border-2 border-pink-200 shrink-0"
+                onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+              />
+            ) : null}
+            <div
+              className="h-9 w-9 rounded-full bg-pink-600 text-sm font-semibold text-white items-center justify-center shrink-0"
+              style={{ display: avatarSrc ? 'none' : 'flex' }}
+            >
               {initials || '—'}
             </div>
             <div className="hidden text-left sm:block">
