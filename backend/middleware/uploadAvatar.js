@@ -13,11 +13,12 @@ if (useCloudinary) {
   const { CloudinaryStorage } = require('multer-storage-cloudinary');
   storage = new CloudinaryStorage({
     cloudinary,
-    params: {
+    params: (_req, file) => ({
       folder: 'erp/avatars',
       resource_type: 'image',
+      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
       use_filename: false,
-    },
+    }),
   });
 } else {
   storage = multer.diskStorage({

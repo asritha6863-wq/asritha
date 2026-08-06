@@ -29,12 +29,17 @@ if (useCloudinary) {
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       ].includes(file.mimetype);
+      const isImage = file.mimetype.startsWith('image/');
+      // Use original file extension in public_id so Cloudinary sets correct Content-Type
+      const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       return {
         folder: 'erp/requirements',
-        // PDFs and docs must use 'raw' resource_type so Cloudinary serves them correctly
-        resource_type: (isPDF || isDoc) ? 'raw' : 'image',
-        public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+        resource_type: isImage ? 'image' : 'raw',
+        // Include extension in public_id for raw files so browser knows content type
+        public_id: (isPDF || isDoc) ? `${uniqueName}.${ext}` : uniqueName,
         use_filename: false,
+        format: isImage ? undefined : '', // don't auto-format
       };
     },
   });
