@@ -26,6 +26,7 @@ const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen]       = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [imgError, setImgError]       = useState(false);
   const menuRef = useRef(null);
 
   // Poll unread count every 30 seconds
@@ -66,6 +67,9 @@ const Navbar = ({ onMenuClick }) => {
     ? (user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}/${user.profileImage}`)
     : null;
 
+  // Reset error flag when profile image changes (e.g. after upload)
+  useEffect(() => { setImgError(false); }, [user?.profileImage]);
+
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-pink-100 bg-white px-4 sm:px-6">
       {/* Mobile menu button */}
@@ -101,20 +105,18 @@ const Navbar = ({ onMenuClick }) => {
             className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-pink-50"
           >
             {/* Avatar — shows photo if set, else initials */}
-            {avatarSrc ? (
+            {avatarSrc && !imgError ? (
               <img
                 src={avatarSrc}
                 alt={user?.firstName}
                 className="h-9 w-9 rounded-full object-cover border-2 border-pink-200 shrink-0"
-                onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+                onError={() => setImgError(true)}
               />
-            ) : null}
-            <div
-              className="h-9 w-9 rounded-full bg-pink-600 text-sm font-semibold text-white items-center justify-center shrink-0"
-              style={{ display: avatarSrc ? 'none' : 'flex' }}
-            >
-              {initials || '—'}
-            </div>
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-pink-600 text-sm font-semibold text-white flex items-center justify-center shrink-0">
+                {initials || '—'}
+              </div>
+            )}
             <div className="hidden text-left sm:block">
               <p className="text-sm font-semibold text-slate-800 leading-tight">
                 {user?.firstName} {user?.lastName}

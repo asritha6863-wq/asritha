@@ -137,11 +137,6 @@ const Sidebar = ({ open, onClose }) => {
                 <Ico d={ICONS.list} className="h-5 w-5" />
                 Review Queue
               </NavLink>
-              <SectionLabel>Documents</SectionLabel>
-              <NavLink to="/review/queue" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`}>
-                <Ico d={ICONS.draft} className="h-5 w-5" />
-                Upload Quotations
-              </NavLink>
               <SectionLabel>Alerts</SectionLabel>
               <NavLink to="/notifications" className={linkClasses}>
                 <Ico d={ICONS.bell} className="h-5 w-5" />
