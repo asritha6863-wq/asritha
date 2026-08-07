@@ -12,16 +12,18 @@ export const AuthProvider = ({ children }) => {
       return stored ? JSON.parse(stored) : null;
     } catch { return null; }
   });
+  const [token, setToken] = useState(() => localStorage.getItem('erp_token') || null);
   const [loading, setLoading] = useState(true); // true while we check for an existing session
 
   // On mount, always fetch fresh fully-populated user from server (dept obj, designation obj, etc.)
   useEffect(() => {
     const bootstrap = async () => {
-      const token = localStorage.getItem('erp_token');
-      if (!token) {
+      const t = localStorage.getItem('erp_token');
+      if (!t) {
         setLoading(false);
         return;
       }
+      setToken(t);
       try {
         const { data } = await authService.getMe();
         // Overwrite any stale localStorage with fresh populated data
@@ -30,6 +32,7 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         localStorage.removeItem('erp_token');
         localStorage.removeItem('erp_user');
+        setToken(null);
         setUser(null);
       } finally {
         setLoading(false);
@@ -41,6 +44,7 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     const { data } = await authService.login(email, password);
     localStorage.setItem('erp_token', data.token);
+    setToken(data.token);
     // Fetch full populated user (department, designation objects) via getMe
     const { data: meData } = await authService.getMe();
     localStorage.setItem('erp_user', JSON.stringify(meData.user));
@@ -56,6 +60,7 @@ export const AuthProvider = ({ children }) => {
     }
     localStorage.removeItem('erp_token');
     localStorage.removeItem('erp_user');
+    setToken(null);
     setUser(null);
   }, []);
 
@@ -68,6 +73,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    token,
     isAuthenticated: !!user,
     loading,
     login,
