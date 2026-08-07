@@ -68,9 +68,11 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
       if (fileRes.statusCode >= 400) {
         return next(new ErrorResponse(`Remote file error: ${fileRes.statusCode}`, 502));
       }
-      res.setHeader('Content-Type', fileRes.headers['content-type'] || mime);
+      const ct = fileRes.headers['content-type'] || mime;
+      res.setHeader('Content-Type', ct);
+      // Force inline — override any attachment disposition from Cloudinary
       res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
-      Object.entries(CORS).forEach(([k,v]) => res.setHeader(k, v));
+      Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
       if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
       fileRes.pipe(res);
     }).on('error', (e) => next(new ErrorResponse('Failed to fetch file: ' + e.message, 502)));

@@ -234,12 +234,14 @@ const ReviewDetail = () => {
         </span>
       );
     }
-    const rawUrl = fileUrl(path);
+    const url = fileUrl(path);
     return (
-      <a href={rawUrl} target="_blank" rel="noreferrer"
+      <button
+        type="button"
+        onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
         className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700 transition-colors">
         👁️ View{label}
-      </a>
+      </button>
     );
   };
 

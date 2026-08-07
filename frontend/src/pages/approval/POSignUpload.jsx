@@ -225,7 +225,7 @@ const POSignUpload = () => {
                 )}
               </div>
             </div>
-            <a href={`${fileUrl(signedPO.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
+            <button type="button" onClick={() => window.open(fileUrl(signedPO.path), `_blank`, `noopener,noreferrer`)} className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</button>
           </div>
         )}
 

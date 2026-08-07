@@ -146,7 +146,7 @@ const GRNUpload = () => {
                 <span className="text-xs text-emerald-600 font-semibold">✍️ Signed</span>
               )}
             </div>
-            <a href={`${fileUrl(req.purchaseOrder.document.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
+            <button type="button" onClick={() => window.open(fileUrl(req.purchaseOrder.document.path), `_blank`, `noopener,noreferrer`)} className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</button>
           </div>
         </div>
       )}
@@ -202,7 +202,7 @@ const GRNUpload = () => {
                 <p className="text-xs text-slate-500">{fmt(existingGRN.size)}</p>
               </div>
             </div>
-            <a href={`${fileUrl(existingGRN.path)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</a>
+            <button type="button" onClick={() => window.open(fileUrl(existingGRN.path), `_blank`, `noopener,noreferrer`)} className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</button>
           </div>
         )}
 
