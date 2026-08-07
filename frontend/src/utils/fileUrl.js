@@ -1,32 +1,21 @@
 /**
- * Build a safe file URL for browser viewing.
- *
- * Cloudinary raw/upload URLs → publicly accessible, use directly
- * Cloudinary image/upload PDFs (old uploads) → route through backend proxy
- * Local paths → prefix with backend base URL
+ * Build a URL to view a file.
+ * All files are served through the backend /api/files/serve endpoint
+ * which streams from disk with correct Content-Type headers.
+ * The JWT token is sent automatically via the Authorization header in axios,
+ * but since we use <a href> links we pass token as query param.
  */
 const API  = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const BASE = API.replace('/api', '');
 
-export const fileUrl = (path) => {
-  if (!path) return '';
+const getToken = () => localStorage.getItem('erp_token') || '';
 
-  if (path.startsWith('http')) {
-    if (path.includes('res.cloudinary.com')) {
-      // raw/upload URLs are publicly accessible — use directly
-      if (path.includes('/raw/upload/')) return path;
-      // image/upload PDFs — proxy through backend (image type PDFs are 401 on free plan)
-      if (path.includes('/image/upload/') && path.toLowerCase().includes('.pdf')) {
-        return `${API}/files/proxy?url=${encodeURIComponent(path)}`;
-      }
-      // Other image types (jpg, png) — use directly
-      return path;
-    }
-    return path;
-  }
-
-  // Local path
-  return `${BASE}/${path}`;
+export const fileUrl = (filePath) => {
+  if (!filePath) return '';
+  // Already a full external URL (old Cloudinary links) — return as-is
+  if (filePath.startsWith('http')) return filePath;
+  // Local path — serve through backend with auth token
+  const token = getToken();
+  return `${API}/files/serve?p=${encodeURIComponent(filePath)}&token=${token}`;
 };
 
-export const isLocalPath = (path) => !!path && !path.startsWith('http');
+export const isLocalPath = (p) => !!p && !p.startsWith('http');

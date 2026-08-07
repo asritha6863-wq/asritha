@@ -11,46 +11,21 @@ const ALLOWED_MIMES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'image/jpeg',
   'image/png',
+  'image/webp',
 ];
 
-// ── Cloudinary storage (used in production when CLOUDINARY_URL is set) ────────
-const useCloudinary = !!process.env.CLOUDINARY_URL;
-
-let storage;
-if (useCloudinary) {
-  const cloudinary = require('../config/cloudinary');
-  const { CloudinaryStorage } = require('multer-storage-cloudinary');
-  storage = new CloudinaryStorage({
-    cloudinary,
-    params: (_req, file) => {
-      const isImage = file.mimetype.startsWith('image/');
-      const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
-      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      return {
-        folder: 'erp/requirements',
-        // Images → 'image' type (publicly accessible)
-        // PDFs/docs → 'raw' type (also publicly accessible on free plan)
-        resource_type: isImage ? 'image' : 'raw',
-        public_id: isImage ? uniqueName : `${uniqueName}.${ext}`,
-        use_filename: false,
-        overwrite: false,
-      };
-    },
-  });
-} else {
-  // Fallback: local disk storage
-  storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      const dir = path.join(__dirname, '..', 'uploads', 'requirements');
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      cb(null, dir);
-    },
-    filename: (_req, file, cb) => {
-      const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      cb(null, `${unique}${path.extname(file.originalname)}`);
-    },
-  });
-}
+// Always use local disk storage
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = path.join(__dirname, '..', 'uploads', 'requirements');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${unique}${path.extname(file.originalname)}`);
+  },
+});
 
 const upload = multer({
   storage,
@@ -61,18 +36,10 @@ const upload = multer({
   },
 });
 
-// Normalise uploaded file so controllers always see the same shape regardless of storage backend:
-//   file.path      → URL (Cloudinary) or local relative path
-//   file.filename  → public_id (Cloudinary) or disk filename
+// Normalize file so controllers always see file.path as relative path
 const normalizeFiles = (req, _res, next) => {
   const normalize = (f) => {
-    if (useCloudinary) {
-      f.path     = f.path;        // Cloudinary already sets f.path = secure_url
-      f.filename = f.filename;    // public_id
-      f.originalPath = f.path;    // alias for controllers that use .path
-    } else {
-      f.path = `uploads/requirements/${f.filename}`;
-    }
+    f.path = `uploads/requirements/${f.filename}`;
     return f;
   };
   if (req.files) req.files = req.files.map(normalize);

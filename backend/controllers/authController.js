@@ -200,14 +200,7 @@ exports.uploadMyAvatar = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user) return next(new ErrorResponse('User not found', 404));
 
-  // Delete old avatar only if it was a locally stored file (not Cloudinary)
-  if (user.profileImage && user.profileImage.startsWith('uploads/avatars/')) {
-    const oldPath = path.join(__dirname, '..', user.profileImage);
-    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-  }
-  // If old avatar was Cloudinary, we leave it (free tier keeps them; can add deletion later)
-
-  // req.file.path is the Cloudinary secure_url OR local relative path (normalized by middleware)
+  // req.file.path is already normalized by uploadAvatar middleware
   user.profileImage = req.file.path;
   user.updatedBy = req.user.id;
   await user.save();
