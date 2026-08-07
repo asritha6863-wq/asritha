@@ -62,16 +62,14 @@ const Navbar = ({ onMenuClick }) => {
   };
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  const BASE_URL = API_URL.replace('/api', '');
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '';
-  const token = localStorage.getItem('erp_token') || '';
 
-  // Build avatar URL — serve through API endpoint with token to avoid CORS/auth issues
-  const avatarSrc = user?.profileImage
-    ? (user.profileImage.startsWith('http')
-        ? user.profileImage
-        : `${API_URL}/files/serve?p=${encodeURIComponent(user.profileImage)}&token=${encodeURIComponent(token)}`)
-    : null;
+  const getAvatarUrl = (img) => {
+    if (!img) return null;
+    const token = localStorage.getItem('erp_token') || '';
+    return `${API_URL}/files/serve?p=${encodeURIComponent(img)}&token=${encodeURIComponent(token)}`;
+  };
+  const avatarSrc = getAvatarUrl(user?.profileImage);
 
   // Reset error flag when profile image changes
   useEffect(() => { setImgError(false); }, [user?.profileImage]);

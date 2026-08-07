@@ -49,7 +49,35 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
   const { p } = req.query;
   if (!p) return next(new ErrorResponse('File path required', 400));
 
-  // Sanitize — prevent directory traversal
+  const CORS = {
+    'Cross-Origin-Resource-Policy': 'cross-origin',
+    'Access-Control-Allow-Origin': '*',
+    'Cache-Control': 'private, max-age=3600',
+  };
+
+  // ── Cloudinary URL — fetch server-side and stream to client ──────────────
+  if (p.startsWith('http')) {
+    const https = require('https');
+    const http  = require('http');
+    const ext   = (p.split('?')[0].split('.').pop() || '').toLowerCase();
+    const mime  = MIME_MAP[ext] || 'application/octet-stream';
+    const fname = p.split('/').pop().split('?')[0] || 'file';
+    const lib   = p.startsWith('https') ? https : http;
+
+    lib.get(p, (fileRes) => {
+      if (fileRes.statusCode >= 400) {
+        return next(new ErrorResponse(`Remote file error: ${fileRes.statusCode}`, 502));
+      }
+      res.setHeader('Content-Type', fileRes.headers['content-type'] || mime);
+      res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
+      Object.entries(CORS).forEach(([k,v]) => res.setHeader(k, v));
+      if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
+      fileRes.pipe(res);
+    }).on('error', (e) => next(new ErrorResponse('Failed to fetch file: ' + e.message, 502)));
+    return;
+  }
+
+  // ── Local disk file ────────────────────────────────────────────────────────
   const safePath = p.replace(/\.\./g, '').replace(/^\//, '');
   const absPath  = path.join(__dirname, '..', safePath);
 
@@ -64,9 +92,7 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
   res.setHeader('Content-Type', mime);
   res.setHeader('Content-Disposition', `inline; filename="${path.basename(absPath)}"`);
   res.setHeader('Content-Length', stat.size);
-  res.setHeader('Cache-Control', 'private, max-age=3600');
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  Object.entries(CORS).forEach(([k,v]) => res.setHeader(k, v));
   fs.createReadStream(absPath).pipe(res);
 }));
 
