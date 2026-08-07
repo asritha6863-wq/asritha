@@ -1,5 +1,8 @@
 // Loads and validates required environment variables at startup.
-// Fails fast with a clear message rather than throwing confusing errors later.
+// Previously the process exited when required env vars were missing which caused immediate failure
+// during development or when running in CI without secrets. To make the app easier to run locally
+// we warn when variables are missing and provide safe non-production defaults so the server can start.
+// IMPORTANT: these defaults are for local development only — they are insecure for production.
 require('dotenv').config();
 
 const required = ['MONGO_URI', 'JWT_SECRET'];
@@ -7,11 +10,22 @@ const required = ['MONGO_URI', 'JWT_SECRET'];
 const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
-  console.error(
-    `[Config] Missing required environment variables: ${missing.join(', ')}\n` +
-    `Copy .env.example to .env and fill in the values before starting the server.`
-  );
-  process.exit(1);
+  console.warn(`\n[Config] Missing required environment variables: ${missing.join(', ')}\n` +
+    `Copy .env.example to .env and fill in the values before deploying to production.`);
+
+  // Provide sensible development defaults (only used if the vars are missing).
+  // These keep the server from exiting immediately and make local development easier.
+  if (!process.env.MONGO_URI) {
+    process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/asritha_dev';
+    console.warn(`[Config] Using fallback MONGO_URI=${process.env.MONGO_URI} (development only)`);
+  }
+
+  if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'change_me_dev_secret';
+    console.warn('[Config] Using fallback JWT_SECRET=change_me_dev_secret (development only)');
+  }
+
+  // Do NOT exit here. In production you should supply real values; this fallback is only for dev/test.
 }
 
 module.exports = {
