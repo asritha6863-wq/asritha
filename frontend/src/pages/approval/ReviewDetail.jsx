@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fileUrl, isLocalPath } from '../../utils/fileUrl';
 import approvalService from '../../services/approvalService';
+import FileViewer from '../../components/common/FileViewer';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
 import ApprovalTimeline from '../../components/requirements/ApprovalTimeline';
@@ -116,6 +117,7 @@ const ReviewDetail = () => {
   const [modal, setModal]           = useState(null); // 'approve'|'reject'|'return'
   const [actionLoading, setActionLoading] = useState(false);
   const [comment, setComment]       = useState('');
+  const [viewerFile, setViewerFile] = useState(null); // { path, name }
   const [commentLoading, setCommentLoading] = useState(false);
   // SE quotation upload state
   const [quotFiles, setQuotFiles]   = useState([]);
@@ -225,7 +227,7 @@ const ReviewDetail = () => {
   const fmtSize = (b) => b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB`;
 
   // Render a View button, or a "not available" notice for dead local files
-  const FileLinks = ({ path, label = '' }) => {
+  const FileLinks = ({ path, name, label = '' }) => {
     if (!path) return null;
     if (isLocalPath(path)) {
       return (
@@ -234,11 +236,10 @@ const ReviewDetail = () => {
         </span>
       );
     }
-    const url = fileUrl(path);
     return (
       <button
         type="button"
-        onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+        onClick={() => setViewerFile({ path, name: name || path.split('/').pop() })}
         className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700 transition-colors">
         👁️ View{label}
       </button>
@@ -961,6 +962,15 @@ const ReviewDetail = () => {
       {modal && (
         <ActionModal type={modal} requirement={req} onConfirm={handleAction}
           onClose={() => setModal(null)} loading={actionLoading} userRole={user?.role} />
+      )}
+
+      {/* File Viewer Modal */}
+      {viewerFile && (
+        <FileViewer
+          path={viewerFile.path}
+          name={viewerFile.name}
+          onClose={() => setViewerFile(null)}
+        />
       )}
     </div>
   );

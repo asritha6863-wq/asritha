@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fileUrl } from '../../utils/fileUrl';
+import FileViewer from '../../components/common/FileViewer';
 import { useParams, useNavigate } from 'react-router-dom';
 import requirementService from '../../services/requirementService';
 import StatusBadge from '../../components/requirements/StatusBadge';
@@ -30,6 +31,7 @@ const RequirementDetail = () => {
 
   const [req, setReq] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [viewerFile, setViewerFile] = useState(null);
   const [comment, setComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -186,7 +188,7 @@ const RequirementDetail = () => {
                       return (
                         <button
                           type="button"
-                          onClick={() => window.open(viewUrl, '_blank', 'noopener,noreferrer')}
+                          onClick={() => setViewerFile({ path: att.path, name: att.originalName || att.path.split('/').pop() })}
                           className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700 shrink-0">
                           👁️ View
                         </button>
@@ -233,6 +235,15 @@ const RequirementDetail = () => {
           </Section>
         </div>
       </div>
+
+      {/* File Viewer Modal */}
+      {viewerFile && (
+        <FileViewer
+          path={viewerFile.path}
+          name={viewerFile.name}
+          onClose={() => setViewerFile(null)}
+        />
+      )}
     </div>
   );
 };
