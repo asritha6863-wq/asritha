@@ -62,11 +62,39 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
   const stat = fs.statSync(absPath);
 
   res.setHeader('Content-Type', mime);
+  // Serve inline so PDFs/images open in the browser when the user clicks "View"
   res.setHeader('Content-Disposition', `inline; filename="${path.basename(absPath)}"`);
   res.setHeader('Content-Length', stat.size);
   res.setHeader('Cache-Control', 'private, max-age=3600');
 
   fs.createReadStream(absPath).pipe(res);
+}));
+
+/**
+ * GET /api/files/download?p=uploads/requirements/filename.pdf
+ * Streams a file as an attachment so the browser downloads it.
+ * Requires JWT — only logged-in users can download files.
+ */
+router.get('/download', fileAuth, asyncHandler(async (req, res, next) => {
+  const { p } = req.query;
+  if (!p) return next(new ErrorResponse('File path required', 400));
+
+  // Sanitize — prevent directory traversal
+  const safePath = p.replace(/\.\./g, '').replace(/^\//, '');
+  const absPath  = path.join(__dirname, '..', safePath);
+
+  if (!fs.existsSync(absPath)) {
+    return next(new ErrorResponse('File not found', 404));
+  }
+
+  // Use express res.download which sets Content-Disposition: attachment
+  res.download(absPath, path.basename(absPath), (err) => {
+    if (err) {
+      // If headers already sent the pipe will fail — surface a friendly error
+      if (!res.headersSent) return next(new ErrorResponse('Failed to download', 500));
+      console.error('Download stream error:', err);
+    }
+  });
 }));
 
 module.exports = router;
