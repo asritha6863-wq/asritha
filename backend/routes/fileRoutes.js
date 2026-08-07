@@ -1,58 +1,71 @@
-const express = require('express');
-const router  = express.Router();
-const https   = require('https');
-const http    = require('http');
+const express  = require('express');
+const router   = express.Router();
+const https    = require('https');
+const http     = require('http');
+const cloudinary = require('../config/cloudinary');
 const { protect } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
 const ErrorResponse = require('../utils/ErrorResponse');
 
 /**
- * GET /api/files/proxy?url=<encoded-cloudinary-url>
- * Proxies a Cloudinary file through the backend so it's accessible to authenticated users.
- * This bypasses Cloudinary access restrictions while keeping files protected by JWT.
+ * GET /api/files/proxy?url=<encoded-url>
+ * Streams a file through the backend using a signed Cloudinary URL.
+ * Requires JWT authentication so only logged-in users can access files.
  */
 router.get('/proxy', protect, asyncHandler(async (req, res, next) => {
   const { url } = req.query;
-  if (!url) return next(new ErrorResponse('url query param required', 400));
+  if (!url) return next(new ErrorResponse('url param required', 400));
 
-  let decodedUrl;
-  try {
-    decodedUrl = decodeURIComponent(url);
-  } catch {
-    return next(new ErrorResponse('Invalid URL', 400));
+  let rawUrl;
+  try { rawUrl = decodeURIComponent(url); } catch { return next(new ErrorResponse('Invalid URL', 400)); }
+
+  // Local file — redirect to static
+  if (!rawUrl.startsWith('http')) {
+    const BASE = (process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`);
+    return res.redirect(`${BASE}/${rawUrl}`);
   }
 
-  // Only allow Cloudinary URLs
-  if (!decodedUrl.includes('res.cloudinary.com') && !decodedUrl.startsWith('http')) {
-    return next(new ErrorResponse('Only Cloudinary URLs are supported', 403));
+  // Only proxy Cloudinary URLs
+  if (!rawUrl.includes('res.cloudinary.com')) {
+    return next(new ErrorResponse('Only Cloudinary URLs allowed', 403));
   }
 
-  // For local paths, redirect to the static file
-  if (!decodedUrl.startsWith('http')) {
-    return res.redirect(`/${decodedUrl}`);
-  }
+  // Extract public_id and resource_type from URL and generate a signed URL
+  // URL format: https://res.cloudinary.com/<cloud>/image/upload/v<ver>/public_id.ext
+  const match = rawUrl.match(/res\.cloudinary\.com\/([^/]+)\/(image|raw|video)\/upload\/(?:v\d+\/)?(.+)$/);
+  if (!match) return next(new ErrorResponse('Cannot parse Cloudinary URL', 400));
 
-  const protocol = decodedUrl.startsWith('https') ? https : http;
+  const [, , resourceType, publicIdWithExt] = match;
+  // Remove extension from public_id for signing
+  const publicId = publicIdWithExt.replace(/\.[^.]+$/, '');
+  const ext      = publicIdWithExt.includes('.') ? publicIdWithExt.split('.').pop() : '';
 
-  protocol.get(decodedUrl, (fileRes) => {
-    if (fileRes.statusCode === 401 || fileRes.statusCode === 403) {
-      // Try with API credentials via Cloudinary Admin API
-      return next(new ErrorResponse('File access denied by storage provider', 403));
-    }
-
-    // Forward content-type and disposition headers
-    const ct = fileRes.headers['content-type'] || 'application/octet-stream';
-    res.setHeader('Content-Type', ct);
-    res.setHeader('Content-Disposition', 'inline');
-    if (fileRes.headers['content-length']) {
-      res.setHeader('Content-Length', fileRes.headers['content-length']);
-    }
-    res.setHeader('Cache-Control', 'private, max-age=3600');
-
-    fileRes.pipe(res);
-  }).on('error', (err) => {
-    next(new ErrorResponse('Failed to fetch file: ' + err.message, 500));
+  // Generate a signed delivery URL valid for 2 hours
+  const signedUrl = cloudinary.url(publicId, {
+    resource_type : resourceType,
+    type          : 'upload',
+    sign_url      : true,
+    secure        : true,
+    expires_at    : Math.floor(Date.now() / 1000) + 7200,
+    format        : ext || undefined,
   });
+
+  // Determine MIME type for response header
+  const mimeMap = { pdf:'application/pdf', jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp', doc:'application/msword', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', xls:'application/vnd.ms-excel', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+  const mime = mimeMap[ext?.toLowerCase()] || 'application/octet-stream';
+
+  const lib = signedUrl.startsWith('https') ? https : http;
+  lib.get(signedUrl, (fileRes) => {
+    if (fileRes.statusCode >= 400) {
+      // Stream failed — redirect directly so browser tries
+      return res.redirect(rawUrl);
+    }
+    res.setHeader('Content-Type', fileRes.headers['content-type'] || mime);
+    res.setHeader('Content-Disposition', `inline; filename="${publicIdWithExt}"`);
+    if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
+    res.setHeader('Cache-Control', 'private, max-age=7200');
+    fileRes.pipe(res);
+  }).on('error', () => res.redirect(rawUrl));
 }));
 
 module.exports = router;
