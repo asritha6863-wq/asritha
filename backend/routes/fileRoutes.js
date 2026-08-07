@@ -6,6 +6,9 @@ const { protect } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const asyncHandler = require('../utils/asyncHandler');
+const ErrorResponse = require('../utils/ErrorResponse');
+
 // Middleware that accepts token from query param OR Authorization header
 const fileAuth = asyncHandler(async (req, res, next) => {
   let token = req.query.token;
@@ -22,8 +25,7 @@ const fileAuth = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Invalid token', 401));
   }
 });
-const asyncHandler = require('../utils/asyncHandler');
-const ErrorResponse = require('../utils/ErrorResponse');
+const asyncHandler2 = null; // placeholder to keep structure
 
 const MIME_MAP = {
   pdf:  'application/pdf',
