@@ -49,7 +49,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12" style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #bfdbfe 100%)' }}>
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
 
         {/* NiSHKA Brand Header */}
