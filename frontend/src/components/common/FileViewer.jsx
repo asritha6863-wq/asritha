@@ -13,13 +13,22 @@ const FileViewer = ({ path, name, onClose }) => {
 
   useEffect(() => {
     if (!path) return;
-    const ext = (path.split('?')[0].split('.').pop() || '').toLowerCase();
+    // Determine type from name (more reliable than path for Cloudinary URLs with no ext)
+    const src = name || path;
+    const ext = src.split('.').pop().toLowerCase();
     const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    setType(imgExts.includes(ext) ? 'image' : 'pdf');
-    setUrl(fileUrl(path));
+    const isImg = imgExts.includes(ext);
+    setType(isImg ? 'image' : 'pdf');
+
+    const token = localStorage.getItem('erp_token') || '';
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    // Pass mime hint so backend sets correct Content-Type for files with no extension
+    const mimeHint = isImg ? 'image' : 'pdf';
+    const serveEndpoint = `${API}/files/serve?p=${encodeURIComponent(path)}&token=${encodeURIComponent(token)}&mime=${mimeHint}`;
+    setUrl(serveEndpoint);
     setLoading(true);
     setError('');
-  }, [path]);
+  }, [path, name]);
 
   if (!path) return null;
 

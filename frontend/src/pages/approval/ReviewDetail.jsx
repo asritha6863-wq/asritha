@@ -468,7 +468,7 @@ const ReviewDetail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-4 shrink-0">
-                        <FileLinks path={att.path} />
+                        <FileLinks path={att.path} name={att.originalName} />
                       </div>
                     </div>
                   );
@@ -549,7 +549,7 @@ const ReviewDetail = () => {
                         return (
                           <td key={k} className={`border border-slate-200 px-3 py-2 ${isRec ? 'bg-emerald-50' : ''}`}>
                             {q?.quotationFile
-                              ? <FileLinks path={q.quotationFile.path} />
+                              ? <FileLinks path={q.quotationFile.path} name={q.quotationFile.originalName} />
                               : <span className="text-slate-400 text-xs">Not uploaded</span>
                             }
                           </td>

@@ -59,18 +59,24 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
   if (p.startsWith('http')) {
     const https = require('https');
     const http  = require('http');
-    const ext   = (p.split('?')[0].split('.').pop() || '').toLowerCase();
-    const mime  = MIME_MAP[ext] || 'application/octet-stream';
-    const fname = p.split('/').pop().split('?')[0] || 'file';
+    // Determine file extension from URL
+    const urlNoQuery = p.split('?')[0];
+    const ext   = (urlNoQuery.split('.').pop() || '').toLowerCase();
+    const validExts = ['pdf','jpg','jpeg','png','gif','webp','doc','docx','xls','xlsx'];
+    // Use mime hint from query param if provided (sent by FileViewer component)
+    const mimeHint = req.query.mime === 'image' ? 'jpg' : 'pdf';
+    const detectedExt = validExts.includes(ext) ? ext : mimeHint;
+    const mime  = MIME_MAP[detectedExt] || 'application/pdf';
+    const rawFilename = urlNoQuery.split('/').pop() || 'document';
+    const fname = rawFilename.includes('.') ? rawFilename : `${rawFilename}.${detectedExt}`;
     const lib   = p.startsWith('https') ? https : http;
 
     lib.get(p, (fileRes) => {
       if (fileRes.statusCode >= 400) {
         return next(new ErrorResponse(`Remote file error: ${fileRes.statusCode}`, 502));
       }
-      const ct = fileRes.headers['content-type'] || mime;
-      res.setHeader('Content-Type', ct);
-      // Force inline — override any attachment disposition from Cloudinary
+      // Force correct Content-Type and inline disposition — override Cloudinary headers
+      res.setHeader('Content-Type', mime);
       res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
       Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
       if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
