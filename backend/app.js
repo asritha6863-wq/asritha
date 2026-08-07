@@ -85,10 +85,12 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 }
 
-// --- Static uploads ---
+// --- Static uploads --- served with CORS so <img src> works from Vercel frontend
 const path = require('path');
 app.use('/uploads', (req, res, next) => {
-  // Let browsers open PDFs/images inline instead of forcing download
+  // Allow the Vercel frontend to load images cross-origin
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   if (req.path.match(/\.(pdf)$/i)) res.setHeader('Content-Disposition', 'inline');
   if (req.path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) res.setHeader('Content-Disposition', 'inline');

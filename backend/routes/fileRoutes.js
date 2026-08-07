@@ -62,10 +62,11 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
   const stat = fs.statSync(absPath);
 
   res.setHeader('Content-Type', mime);
-  // Serve inline so PDFs/images open in the browser when the user clicks "View"
   res.setHeader('Content-Disposition', `inline; filename="${path.basename(absPath)}"`);
   res.setHeader('Content-Length', stat.size);
   res.setHeader('Cache-Control', 'private, max-age=3600');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
   fs.createReadStream(absPath).pipe(res);
 }));

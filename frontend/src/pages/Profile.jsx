@@ -62,9 +62,12 @@ const Profile = () => {
 
   // Show local preview first; fall back to saved image from context
   const BASE_URL_AVATAR = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  const API_URL_AVATAR  = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const getAvatarUrl = (img) => {
     if (!img) return null;
-    return img.startsWith('http') ? img : `${BASE_URL_AVATAR}/${img}`;
+    if (img.startsWith('http')) return img;
+    const token = localStorage.getItem('erp_token') || '';
+    return `${API_URL_AVATAR}/files/serve?p=${encodeURIComponent(img)}&token=${encodeURIComponent(token)}`;
   };
   const currentAvatar = photoPreview || getAvatarUrl(user?.profileImage);
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '?';
