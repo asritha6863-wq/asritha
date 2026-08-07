@@ -67,7 +67,6 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
   res.setHeader('Cache-Control', 'private, max-age=3600');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Access-Control-Allow-Origin', '*');
-
   fs.createReadStream(absPath).pipe(res);
 }));
 
