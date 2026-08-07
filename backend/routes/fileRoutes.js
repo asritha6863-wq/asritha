@@ -55,33 +55,76 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
     'Cache-Control': 'private, max-age=3600',
   };
 
-  // ── Cloudinary URL — fetch server-side and stream to client ──────────────
+  // ── Cloudinary URL — use Admin API to download and stream ────────────────
+  if (p.startsWith('http') && p.includes('cloudinary.com')) {
+    const match = p.match(/res\.cloudinary\.com\/([^/]+)\/(image|raw|video)\/upload\/(?:v\d+\/)?(.+)$/);
+    if (!match) return next(new ErrorResponse('Cannot parse Cloudinary URL', 400));
+
+    const [, , resourceType, publicIdRaw] = match;
+    const cloudinary = require('../config/cloudinary');
+
+    const urlNoQuery  = publicIdRaw.split('?')[0];
+    const ext         = (urlNoQuery.split('.').pop() || '').toLowerCase();
+    const validExts   = ['pdf','jpg','jpeg','png','gif','webp','doc','docx','xls','xlsx'];
+    const mimeHint    = req.query.mime === 'image' ? 'jpg' : 'pdf';
+    const detectedExt = validExts.includes(ext) ? ext : mimeHint;
+    const mime        = MIME_MAP[detectedExt] || 'application/pdf';
+    const fname       = urlNoQuery.split('/').pop() || `file.${detectedExt}`;
+
+    try {
+      // Use cloudinary.api.resource to get a fresh delivery URL with auth
+      const resourceInfo = await cloudinary.api.resource(publicIdRaw, {
+        resource_type: resourceType,
+        type: 'upload',
+      });
+
+      // Download using axios or https with the cloudinary credentials
+      const https = require('https');
+      const http  = require('http');
+
+      // Build authenticated URL using API key/secret as Basic auth
+      const authUrl = resourceInfo.secure_url;
+      const [cloudName, apiKey, apiSecret] = [
+        process.env.CLOUDINARY_URL.match(/cloudinary:\/\/(\d+):([^@]+)@(.+)/)?.slice(1) || []
+      ][0] || [];
+
+      // Fall back to private_download_url which uses API auth
+      const privateUrl = cloudinary.utils.private_download_url(publicIdRaw, detectedExt, {
+        resource_type: resourceType,
+        type: 'upload',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        attachment: false,
+      });
+
+      const lib = privateUrl.startsWith('https') ? https : http;
+      lib.get(privateUrl, (fileRes) => {
+        if (fileRes.statusCode >= 400) {
+          return next(new ErrorResponse(`Cloudinary delivery failed: ${fileRes.statusCode}`, 502));
+        }
+        res.setHeader('Content-Type', mime);
+        res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
+        Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
+        if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
+        fileRes.pipe(res);
+      }).on('error', (e) => next(new ErrorResponse('Download failed: ' + e.message, 502)));
+    } catch (err) {
+      return next(new ErrorResponse('Cloudinary error: ' + err.message, 502));
+    }
+    return;
+  }
+
+  // ── Other external URLs ───────────────────────────────────────────────────
   if (p.startsWith('http')) {
     const https = require('https');
     const http  = require('http');
-    // Determine file extension from URL
-    const urlNoQuery = p.split('?')[0];
-    const ext   = (urlNoQuery.split('.').pop() || '').toLowerCase();
-    const validExts = ['pdf','jpg','jpeg','png','gif','webp','doc','docx','xls','xlsx'];
-    // Use mime hint from query param if provided (sent by FileViewer component)
-    const mimeHint = req.query.mime === 'image' ? 'jpg' : 'pdf';
-    const detectedExt = validExts.includes(ext) ? ext : mimeHint;
-    const mime  = MIME_MAP[detectedExt] || 'application/pdf';
-    const rawFilename = urlNoQuery.split('/').pop() || 'document';
-    const fname = rawFilename.includes('.') ? rawFilename : `${rawFilename}.${detectedExt}`;
     const lib   = p.startsWith('https') ? https : http;
-
     lib.get(p, (fileRes) => {
-      if (fileRes.statusCode >= 400) {
-        return next(new ErrorResponse(`Remote file error: ${fileRes.statusCode}`, 502));
-      }
-      // Force correct Content-Type and inline disposition — override Cloudinary headers
-      res.setHeader('Content-Type', mime);
-      res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
+      if (fileRes.statusCode >= 400) return next(new ErrorResponse(`Remote error ${fileRes.statusCode}`, 502));
+      res.setHeader('Content-Type', fileRes.headers['content-type'] || 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'inline');
       Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
-      if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
       fileRes.pipe(res);
-    }).on('error', (e) => next(new ErrorResponse('Failed to fetch file: ' + e.message, 502)));
+    }).on('error', (e) => next(new ErrorResponse('Fetch failed: ' + e.message, 502)));
     return;
   }
 
