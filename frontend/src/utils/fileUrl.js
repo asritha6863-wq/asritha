@@ -1,19 +1,31 @@
 /**
- * Build a proxy URL for file viewing.
- * All files go through the backend proxy (/api/files/proxy?url=...)
- * which fetches from Cloudinary using server credentials, bypassing access restrictions.
- * Local paths are served directly from the backend static files.
+ * Build a safe file URL for browser viewing.
+ *
+ * Cloudinary raw/upload URLs → publicly accessible, use directly
+ * Cloudinary image/upload PDFs (old uploads) → route through backend proxy
+ * Local paths → prefix with backend base URL
  */
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API  = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const BASE = API.replace('/api', '');
 
 export const fileUrl = (path) => {
   if (!path) return '';
-  // Full Cloudinary URL — proxy through backend
+
   if (path.startsWith('http')) {
-    return `${API}/files/proxy?url=${encodeURIComponent(path)}`;
+    if (path.includes('res.cloudinary.com')) {
+      // raw/upload URLs are publicly accessible — use directly
+      if (path.includes('/raw/upload/')) return path;
+      // image/upload PDFs — proxy through backend (image type PDFs are 401 on free plan)
+      if (path.includes('/image/upload/') && path.toLowerCase().includes('.pdf')) {
+        return `${API}/files/proxy?url=${encodeURIComponent(path)}`;
+      }
+      // Other image types (jpg, png) — use directly
+      return path;
+    }
+    return path;
   }
-  // Local path — serve directly from backend
+
+  // Local path
   return `${BASE}/${path}`;
 };
 

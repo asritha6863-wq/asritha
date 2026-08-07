@@ -23,16 +23,17 @@ if (useCloudinary) {
   storage = new CloudinaryStorage({
     cloudinary,
     params: (_req, file) => {
+      const isImage = file.mimetype.startsWith('image/');
+      const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
       const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       return {
         folder: 'erp/requirements',
-        resource_type: 'auto',
-        public_id: uniqueName,
-        use_filename: true,
-        unique_filename: true,
+        // Images → 'image' type (publicly accessible)
+        // PDFs/docs → 'raw' type (also publicly accessible on free plan)
+        resource_type: isImage ? 'image' : 'raw',
+        public_id: isImage ? uniqueName : `${uniqueName}.${ext}`,
+        use_filename: false,
         overwrite: false,
-        access_mode: 'public',  // ensure publicly accessible
-        type: 'upload',         // standard public upload
       };
     },
   });
