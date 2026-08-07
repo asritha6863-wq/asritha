@@ -2,26 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+:root{
+  --color-primary: #0ea5e9; /* sky-500 */
+  --color-primary-dark: #0369a1; /* sky-800 */
+  --color-accent: #bfdbfe; /* sky-200 */
+  --color-bg-1: #e0f2fe;
+  --color-bg-2: #bae6fd;
+}
+
 @layer base {
   body {
-    @apply bg-pink-50 text-slate-800 font-sans antialiased;
+    @apply text-slate-800 font-sans antialiased;
+    background: linear-gradient(135deg, var(--color-bg-1) 0%, var(--color-bg-2) 50%, var(--color-accent) 100%);
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg bg-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors;
+    background-color: var(--color-primary);
   }
+  .btn-primary:hover { background-color: var(--color-primary-dark); }
+  .btn-primary:disabled { opacity: 0.6; }
+
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg border border-pink-200 bg-white px-4 py-2.5 text-sm font-semibold text-pink-700 shadow-sm transition-colors hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors;
+    border-color: rgba(14,165,233,0.12);
+    color: var(--color-primary-dark);
   }
+
   .input-field {
-    @apply block w-full rounded-lg border border-pink-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-400;
+    @apply block w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:outline-none;
+    border-color: rgba(14,165,233,0.12);
   }
+  .input-field:focus {
+    box-shadow: 0 0 0 4px rgba(14,165,233,0.08);
+    border-color: var(--color-primary);
+  }
+
   .field-label {
     @apply mb-1.5 block text-sm font-medium text-slate-700;
   }
+  .field-error {
+    @apply mt-1 text-xs text-red-700;
+  }
+
   .card {
-    @apply rounded-xl border border-pink-100 bg-white shadow-sm;
+    @apply rounded-xl border bg-white shadow-sm;
+    border-color: rgba(14,165,233,0.08);
   }
 }
