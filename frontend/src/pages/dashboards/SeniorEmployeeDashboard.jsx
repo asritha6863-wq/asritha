@@ -5,6 +5,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import useAuth from '../../hooks/useAuth';
+import DashboardHeader from '../../components/common/DashboardHeader';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
@@ -32,7 +33,6 @@ const StatCard = ({ label, value, color, bg, emoji, onClick, pulse }) => (
 const SeniorEmployeeDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [now, setNow] = useState(new Date());
   const [stats, setStats] = useState(null);
   const [queue, setQueue] = useState([]);
   const [quotQueue, setQuotQueue] = useState([]);
@@ -41,11 +41,6 @@ const SeniorEmployeeDashboard = () => {
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [modal, setModal] = useState(null); // { type, req }
   const [actionLoading, setActionLoading] = useState(false);
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   const loadStats = useCallback(async () => {
     try {
@@ -118,40 +113,23 @@ const SeniorEmployeeDashboard = () => {
   return (
     <div className="space-y-6">
       {/* ── Welcome card ─────────────────────────────────────────────────── */}
-      <div className="card overflow-hidden">
-        <div className="bg-gradient-to-r from-slate-800 to-slate-600 px-6 py-7 sm:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-300">
-                {now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                {' · '}
-                {now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </p>
-              <h1 className="mt-1 text-2xl font-bold text-white">Welcome, {user?.firstName}! 👋</h1>
-              <p className="mt-1 text-sm text-slate-300">{user?.role} · {user?.department?.departmentName || '—'}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
-              {[
-                { label: 'Pending',  val: loadingStats ? '…' : pending,               color: 'text-amber-300'  },
-                { label: 'Approved', val: loadingStats ? '…' : stats?.stats?.approved ?? 0, color: 'text-emerald-300' },
-                { label: 'Rejected', val: loadingStats ? '…' : stats?.stats?.rejected ?? 0, color: 'text-red-300'     },
-                { label: 'Returned', val: loadingStats ? '…' : stats?.stats?.returned ?? 0, color: 'text-orange-300'  },
-              ].map(s => (
-                <div key={s.label} className="rounded-lg bg-white/10 px-3 py-2">
-                  <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
-                  <p className="text-xs text-slate-300">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-x-8 gap-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3 text-xs text-slate-600">
-          <span><span className="font-semibold text-slate-400">ID: </span>{user?.employeeId}</span>
-          <span><span className="font-semibold text-slate-400">Department: </span>{user?.department?.departmentName || '—'}</span>
-          <span><span className="font-semibold text-slate-400">Designation: </span>{user?.designation?.designationName || '—'}</span>
-          <span><span className="font-semibold text-slate-400">Email: </span>{user?.email}</span>
-        </div>
-      </div>
+      <DashboardHeader
+        name={user?.firstName}
+        role={user?.role}
+        employeeId={user?.employeeId}
+        department={user?.department?.departmentName}
+        designation={user?.designation?.designationName}
+        profileImage={user?.profileImage}
+        gradient="linear-gradient(135deg, #5b1a6e 0%, #9b3fbf 100%)"
+        accentColor="#9b3fbf"
+        emoji="📋"
+        stats={[
+          { label: 'Pending',  value: loadingStats ? '…' : pending },
+          { label: 'Approved', value: loadingStats ? '…' : stats?.stats?.approved ?? 0 },
+          { label: 'Rejected', value: loadingStats ? '…' : stats?.stats?.rejected ?? 0 },
+          { label: 'Returned', value: loadingStats ? '…' : stats?.stats?.returned ?? 0 },
+        ]}
+      />
 
       {/* Pending alert */}
       {!loadingStats && pending > 0 && (

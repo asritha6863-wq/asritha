@@ -5,6 +5,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import useAuth from '../../hooks/useAuth';
+import DashboardHeader from '../../components/common/DashboardHeader';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
@@ -32,13 +33,10 @@ const StatCard = ({ label, value, color, bg, emoji, sub, pulse }) => (
 const ChairmanDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [now, setNow] = useState(new Date());
   const [stats, setStats] = useState(null);
   const [queue, setQueue] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingQueue, setLoadingQueue] = useState(true);
-
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
 
   const loadStats = useCallback(async () => {
     try { const { data } = await approvalService.getStats(); setStats(data); }
@@ -78,38 +76,23 @@ const ChairmanDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <div className="card overflow-hidden">
-        <div className="bg-gradient-to-r from-yellow-900 to-yellow-700 px-6 py-7 sm:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-yellow-200">
-                {now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
-                {' · '}{now.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
-              </p>
-              <h1 className="mt-1 text-2xl font-bold text-white">Welcome, {user?.firstName}! 🏆</h1>
-              <p className="mt-1 text-sm text-yellow-200">{user?.role} · Board-Level Oversight</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
-              {[
-                { label:'In Progress', val: loadingStats ? '…' : totalInProgress, color:'text-amber-300'   },
-                { label:'Completed',   val: loadingStats ? '…' : completed,        color:'text-emerald-300' },
-                { label:'MD Pending',  val: loadingStats ? '…' : mdPending,        color:'text-rose-300'   },
-                { label:'Rejected',    val: loadingStats ? '…' : rejected,         color:'text-red-300'    },
-              ].map(s => (
-                <div key={s.label} className="rounded-lg bg-white/10 px-3 py-2">
-                  <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
-                  <p className="text-xs text-yellow-200">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-x-8 gap-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3 text-xs text-slate-600">
-          <span><span className="font-semibold text-slate-400">ID: </span>{user?.employeeId}</span>
-          <span><span className="font-semibold text-slate-400">Email: </span>{user?.email}</span>
-          <span><span className="font-semibold text-slate-400">Designation: </span>{user?.designation?.designationName || '—'}</span>
-        </div>
-      </div>
+      <DashboardHeader
+        name={user?.firstName}
+        role={user?.role}
+        employeeId={user?.employeeId}
+        department={user?.department?.departmentName}
+        designation={user?.designation?.designationName}
+        profileImage={user?.profileImage}
+        gradient="linear-gradient(135deg, #2d1a0a 0%, #92400e 100%)"
+        accentColor="#92400e"
+        emoji="👑"
+        stats={[
+          { label: 'In Progress', value: loadingStats ? '…' : totalInProgress },
+          { label: 'Completed',   value: loadingStats ? '…' : completed },
+          { label: 'MD Pending',  value: loadingStats ? '…' : mdPending },
+          { label: 'Rejected',    value: loadingStats ? '…' : rejected },
+        ]}
+      />
 
       {/* Role banner */}
       <div className="rounded-xl border border-yellow-200 bg-yellow-50 px-5 py-4 flex items-start gap-3">

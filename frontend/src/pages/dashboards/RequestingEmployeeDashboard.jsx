@@ -5,6 +5,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import useAuth from '../../hooks/useAuth';
+import DashboardHeader from '../../components/common/DashboardHeader';
 import requirementService from '../../services/requirementService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
@@ -57,13 +58,6 @@ const RequestingEmployeeDashboard = () => {
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState(new Date());
-
-  // Live clock
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     requirementService.getStats()
@@ -125,70 +119,23 @@ const RequestingEmployeeDashboard = () => {
   return (
     <div className="space-y-6">
       {/* ── Welcome card ─────────────────────────────────────────────────────── */}
-      <div className="card overflow-hidden">
-        <div className="bg-gradient-to-r from-navy-800 to-navy-600 px-6 py-7 sm:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-navy-200">
-                {now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                {' · '}
-                {now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </p>
-              <h1 className="mt-1 text-2xl font-bold text-white">
-                Welcome back, {user?.firstName}! 👋
-              </h1>
-              <p className="mt-1 text-sm text-navy-200">
-                {user?.role}
-                {user?.designation?.designationName && ` · ${user.designation.designationName}`}
-                {user?.department?.departmentName && ` · ${user.department.departmentName}`}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
-              {[
-                { label: 'Total', val: stats?.stats.total ?? '—', color: 'text-white' },
-                { label: 'Active', val: stats ? (stats.stats.Submitted + stats.stats['Under Review']) : '—', color: 'text-blue-200' },
-                { label: 'Approved', val: stats?.stats.Approved ?? '—', color: 'text-emerald-300' },
-                { label: 'Pending', val: stats?.stats.Draft ?? '—', color: 'text-amber-300' },
-              ].map(s => (
-                <div key={s.label} className="rounded-lg bg-white/10 px-3 py-2">
-                  <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
-                  <p className="text-xs text-navy-200">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Employee info strip */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3 text-sm">
-          {/* Profile photo */}
-          {user?.profileImage ? (
-            <img
-              src={user.profileImage.startsWith('http') ? user.profileImage : `${(import.meta.env.VITE_API_URL || '').replace('/api', '')}/${user.profileImage}`}
-              alt={user.firstName}
-              className="h-10 w-10 rounded-full object-cover border-2 border-pink-200 shrink-0"
-            />
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-pink-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
-              {user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '—'}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600">
-            <span><span className="font-semibold text-slate-400">Employee ID </span>{user?.employeeId}</span>
-            <span><span className="font-semibold text-slate-400">Department </span>
-              <span className="font-medium text-pink-700">{user?.department?.departmentName || '—'}</span>
-            </span>
-            <span><span className="font-semibold text-slate-400">Designation </span>
-              <span className="font-medium text-pink-700">
-                {typeof user?.designation === 'object'
-                  ? (user.designation?.designationName || 'Staff')
-                  : 'Staff'}
-              </span>
-            </span>
-            <span><span className="font-semibold text-slate-400">Email </span>{user?.email}</span>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader
+        name={user?.firstName}
+        role={user?.role}
+        employeeId={user?.employeeId}
+        department={user?.department?.departmentName}
+        designation={user?.designation?.designationName}
+        profileImage={user?.profileImage}
+        gradient="linear-gradient(135deg, #7c1f4a 0%, #c13575 100%)"
+        accentColor="#c13575"
+        emoji="👋"
+        stats={[
+          { label: 'Total',    value: stats?.stats.total ?? '—' },
+          { label: 'Active',   value: stats ? (stats.stats.Submitted + stats.stats['Under Review']) : '—' },
+          { label: 'Approved', value: stats?.stats.Approved ?? '—' },
+          { label: 'Drafts',   value: stats?.stats.Draft ?? '—' },
+        ]}
+      />
 
       {/* ── Quick Actions ─────────────────────────────────────────────────────── */}
       <div>

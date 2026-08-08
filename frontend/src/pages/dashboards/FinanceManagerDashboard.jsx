@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useAuth from '../../hooks/useAuth';
+import DashboardHeader from '../../components/common/DashboardHeader';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
@@ -25,15 +26,12 @@ const StatCard = ({ label, value, color, bg, emoji, pulse, sub }) => (
 const FinanceManagerDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [now, setNow] = useState(new Date());
   const [stats, setStats] = useState(null);
   const [queue, setQueue] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [modal, setModal] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
 
   const loadStats = useCallback(async () => {
     try { const { data } = await approvalService.getStats(); setStats(data); }
@@ -85,36 +83,23 @@ const FinanceManagerDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <div className="card overflow-hidden">
-        <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 px-6 py-7 sm:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-emerald-200">
-                {now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
-                {' · '}{now.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
-              </p>
-              <h1 className="mt-1 text-2xl font-bold text-white">Welcome, {user?.firstName}! 💰</h1>
-              <p className="mt-1 text-sm text-emerald-200">{user?.role} · Payment Confirmation</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-3">
-              {[
-                { label:'Awaiting Confirm', val: loadingStats ? '…' : pending,  color:'text-amber-300' },
-                { label:'Paid',             val: loadingStats ? '…' : paid,     color:'text-emerald-300' },
-                { label:'Total Value',      val: loadingStats ? '…' : `AED ${totalValue.toLocaleString()}`, color:'text-blue-300' },
-              ].map(s => (
-                <div key={s.label} className="rounded-lg bg-white/10 px-3 py-2">
-                  <p className={`text-lg font-bold ${s.color}`}>{s.val}</p>
-                  <p className="text-xs text-emerald-200">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-x-8 gap-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3 text-xs text-slate-600">
-          <span><span className="font-semibold text-slate-400">ID: </span>{user?.employeeId}</span>
-          <span><span className="font-semibold text-slate-400">Email: </span>{user?.email}</span>
-        </div>
-      </div>
+      <DashboardHeader
+        name={user?.firstName}
+        role={user?.role}
+        employeeId={user?.employeeId}
+        department={user?.department?.departmentName}
+        designation={user?.designation?.designationName}
+        profileImage={user?.profileImage}
+        gradient="linear-gradient(135deg, #0f3a2a 0%, #047857 100%)"
+        accentColor="#047857"
+        emoji="💰"
+        stats={[
+          { label: 'Awaiting Confirm', value: loadingStats ? '…' : pending },
+          { label: 'Paid',             value: loadingStats ? '…' : paid },
+          { label: 'Rejected',         value: loadingStats ? '…' : stats?.stats?.rejected ?? 0 },
+          { label: 'Total Value',      value: loadingStats ? '…' : `AED ${totalValue.toLocaleString()}` },
+        ]}
+      />
 
       {/* Role info */}
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-start gap-3">

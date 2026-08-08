@@ -3,6 +3,7 @@ import { fileUrl } from '../../utils/fileUrl';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useAuth from '../../hooks/useAuth';
+import DashboardHeader from '../../components/common/DashboardHeader';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';
 import { toast } from '../../components/requirements/Toast';
@@ -90,15 +91,12 @@ const PaymentEntryModal = ({ req, onClose, onSave, loading }) => {
 const AccountantDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [now, setNow] = useState(new Date());
   const [stats, setStats] = useState(null);
   const [queue, setQueue] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [modal, setModal] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
 
   const loadStats = useCallback(async () => {
     try { const { data } = await approvalService.getStats(); setStats(data); }
@@ -162,34 +160,23 @@ const AccountantDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <div className="card overflow-hidden">
-        <div className="bg-gradient-to-r from-fuchsia-900 to-fuchsia-700 px-6 py-7 sm:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-fuchsia-200">{now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})} · {now.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</p>
-              <h1 className="mt-1 text-2xl font-bold text-white">Welcome, {user?.firstName}! 🔍</h1>
-              <p className="mt-1 text-sm text-fuchsia-200">{user?.role} · Step 1, 3 &amp; 5 of Payment Workflow</p>
-            </div>
-            <div className="grid grid-cols-4 gap-2 text-center">
-              {[
-                { label:'3-Way',    val: loadingStats ? '…' : verifyPending,  color:'text-fuchsia-300' },
-                { label:'Jnl Rev',  val: loadingStats ? '…' : journalReview,  color:'text-indigo-300'  },
-                { label:'Pay.Entry',val: loadingStats ? '…' : paymentEntry,   color:'text-amber-300'   },
-                { label:'Paid',     val: loadingStats ? '…' : paid,           color:'text-emerald-300' },
-              ].map(s => (
-                <div key={s.label} className="rounded-lg bg-white/10 px-2 py-2">
-                  <p className={`text-lg font-bold ${s.color}`}>{s.val}</p>
-                  <p className="text-xs text-fuchsia-200">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-x-8 gap-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3 text-xs text-slate-600">
-          <span><span className="font-semibold text-slate-400">ID: </span>{user?.employeeId}</span>
-          <span><span className="font-semibold text-slate-400">Email: </span>{user?.email}</span>
-        </div>
-      </div>
+      <DashboardHeader
+        name={user?.firstName}
+        role={user?.role}
+        employeeId={user?.employeeId}
+        department={user?.department?.departmentName}
+        designation={user?.designation?.designationName}
+        profileImage={user?.profileImage}
+        gradient="linear-gradient(135deg, #6b1a6e 0%, #a21caf 100%)"
+        accentColor="#a21caf"
+        emoji="🔍"
+        stats={[
+          { label: '3-Way',     value: loadingStats ? '…' : verifyPending },
+          { label: 'Jnl Rev',   value: loadingStats ? '…' : journalReview },
+          { label: 'Pay.Entry', value: loadingStats ? '…' : paymentEntry },
+          { label: 'Paid',      value: loadingStats ? '…' : paid },
+        ]}
+      />
 
       {/* Workflow info */}
       <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-4">
