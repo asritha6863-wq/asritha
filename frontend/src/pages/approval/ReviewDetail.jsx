@@ -127,6 +127,8 @@ const ReviewDetail = () => {
   const [journalFile,    setJournalFile]    = useState(null);
   const [journalLoading, setJournalLoading] = useState(false);
   const journalFileRef = useRef(null);
+  const [paymentFile,    setPaymentFile]    = useState(null);
+  const paymentFileRef = useRef(null);
   const [commentLoading, setCommentLoading] = useState(false);
   // SE quotation upload state
   const [quotFiles, setQuotFiles]   = useState([]);
@@ -185,20 +187,62 @@ const ReviewDetail = () => {
     }
   };
 
+  // ── JA: journal entry completed ─────────────────────────────────────────
   const handleJournalSubmit = async () => {
-    if (!journalForm.entryNumber.trim()) { toast.error('Entry number is required'); return; }
     setJournalLoading(true);
     try {
-      await approvalService.saveJournalEntry(req._id, journalForm, journalFile);
-      await approvalService.approve(req._id, `Journal entry submitted. Entry#: ${journalForm.entryNumber}`);
-      toast.success('✅ Journal entry submitted to Senior Accountant for review.');
-      setJournalModal(false);
-      setJournalFile(null);
-      // Reload requirement
-      const { data } = await approvalService.getOne(req._id);
-      setReq(data.requirement);
-    } catch (err) { toast.error(err.message || 'Failed to submit journal entry'); }
+      // Mark journal entry as done (no form needed) and send to SA
+      await approvalService.saveJournalEntry(id, {
+        entryNumber: `JE-${req.requirementNumber}`,
+        entryDate: new Date().toISOString().split('T')[0],
+        amount: req.invoiceAmount || req.estimatedTotalPrice || 0,
+        narration: `Journal entry completed for ${req.requirementNumber}`,
+      }, null);
+      await approvalService.approve(id, 'Journal entry completed by Junior Accountant. Sent to Senior Accountant for verification.');
+      toast.success('✅ Sent to Senior Accountant for verification.');
+      const { data } = await approvalService.getOne(id); setReq(data.requirement);
+    } catch (err) { toast.error(err.message || 'Failed'); }
     finally { setJournalLoading(false); }
+  };
+
+  // ── SA: payment completed + optional file upload ─────────────────────────
+  const handlePaymentDone = async () => {
+    setActionLoading(true);
+    try {
+      // If file uploaded, save payment record with file first
+      if (paymentFile) {
+        const form = new FormData();
+        form.append('paymentRef', `PAY-${req.requirementNumber}`);
+        form.append('paymentDate', new Date().toISOString().split('T')[0]);
+        form.append('paymentMethod', 'Bank Transfer');
+        form.append('amountPaid', req.invoiceAmount || req.estimatedTotalPrice || 0);
+        form.append('file', paymentFile);
+        await approvalService.savePaymentRecord(id, form);
+      } else {
+        await approvalService.savePaymentRecord(id, {
+          paymentRef:    `PAY-${req.requirementNumber}`,
+          paymentDate:   new Date().toISOString().split('T')[0],
+          paymentMethod: 'Bank Transfer',
+          amountPaid:    req.invoiceAmount || req.estimatedTotalPrice || 0,
+        });
+      }
+      await approvalService.approve(id, 'Payment completed by Senior Accountant. Sent to Junior Accountant for filing.');
+      toast.success('💳 Payment done — sent to Junior Accountant for filing.');
+      setPaymentFile(null);
+      const { data } = await approvalService.getOne(id); setReq(data.requirement);
+    } catch (err) { toast.error(err.message || 'Failed'); }
+    finally { setActionLoading(false); }
+  };
+
+  // ── JA: filing ───────────────────────────────────────────────────────────
+  const handleFiling = async () => {
+    setActionLoading(true);
+    try {
+      await approvalService.approve(id, 'All documents filed by Junior Accountant. Procurement cycle closed.');
+      toast.success('📁 Filed — procurement cycle complete!');
+      const { data } = await approvalService.getOne(id); setReq(data.requirement);
+    } catch (err) { toast.error(err.message || 'Failed'); }
+    finally { setActionLoading(false); }
   };
 
   const handleComment = async () => {
@@ -916,93 +960,170 @@ const ReviewDetail = () => {
             </Section>
           )}
 
-          {/* ── Journal Entry (visible from Journal Entry stage onwards) ── */}
-          {(req.journalEntry?.entryNumber || ['Journal Entry','Journal Review','FM Verification','Payment Entry','Filing','Paid','Completed'].includes(req.status)) && (
+          {/* ── Journal Entry Stage ────────────────────────────────────── */}
+          {['Journal Entry','Journal Review','FM Verification','Payment Entry','Filing','Paid','Completed'].includes(req.status) && (
             <Section title="📝 Journal Entry">
-              {req.journalEntry?.entryNumber ? (
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-2">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
-                    <div><p className="text-xs text-slate-400">Entry #</p><p className="font-bold text-indigo-800">{req.journalEntry.entryNumber}</p></div>
-                    <div><p className="text-xs text-slate-400">Date</p><p className="font-medium text-slate-800">{req.journalEntry.entryDate ? new Date(req.journalEntry.entryDate).toLocaleDateString() : '—'}</p></div>
-                    <div><p className="text-xs text-slate-400">Amount</p><p className="font-bold text-indigo-700">AED {(req.journalEntry.amount || 0).toLocaleString()}</p></div>
-                    {req.journalEntry.voucherType && <div><p className="text-xs text-slate-400">Voucher Type</p><p className="font-medium text-slate-800">{req.journalEntry.voucherType}</p></div>}
-                    {req.journalEntry.referenceNo  && <div><p className="text-xs text-slate-400">Reference No</p><p className="font-medium text-slate-800">{req.journalEntry.referenceNo}</p></div>}
-                    <div><p className="text-xs text-slate-400">Debit A/c</p><p className="font-medium text-slate-800">{req.journalEntry.debitAccount || '—'}</p></div>
-                    <div><p className="text-xs text-slate-400">Credit A/c</p><p className="font-medium text-slate-800">{req.journalEntry.creditAccount || '—'}</p></div>
-                    {req.journalEntry.narration && <div className="sm:col-span-3"><p className="text-xs text-slate-400">Narration</p><p className="text-sm text-slate-700 italic">{req.journalEntry.narration}</p></div>}
-                  </div>
-                  {req.journalEntry.enteredByName && (
-                    <p className="text-xs text-slate-400 pt-2 border-t border-indigo-200">
-                      Entered by <span className="font-semibold text-slate-600">{req.journalEntry.enteredByName}</span>
-                      {req.journalEntry.enteredAt && ` · ${new Date(req.journalEntry.enteredAt).toLocaleString()}`}
-                    </p>
-                  )}
-                  {req.journalEntry.document?.path && (
-                    <div className="flex items-center justify-between rounded-lg border border-indigo-200 bg-white px-3 py-2 mt-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">📄</span>
-                        <div>
-                          <p className="text-xs font-medium text-slate-800">{req.journalEntry.document.originalName}</p>
-                          <p className="text-xs text-slate-400">Journal Voucher</p>
-                        </div>
-                      </div>
-                      <FileLinks path={req.journalEntry.document.path} name={req.journalEntry.document.originalName} />
-                    </div>
-                  )}
+              {/* JA — just a completion button */}
+              {user?.role === 'Junior Accountant' && req.status === 'Journal Entry' && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-slate-600">Confirm journal entry has been completed in the accounting system, then send to Senior Accountant for verification.</p>
+                  <button
+                    onClick={handleJournalSubmit}
+                    disabled={journalLoading}
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 w-fit"
+                  >
+                    {journalLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+                    ✅ Entry Completed — Send to Senior Accountant
+                  </button>
                 </div>
-              ) : (
-                <div>
-                  <p className="text-sm text-slate-400 italic mb-3">
-                    {req.status === 'Journal Entry' ? '' : 'No journal entry yet.'}
-                  </p>
-                  {/* JA action button — shown only when status is Journal Entry and user is JA */}
-                  {user?.role === 'Junior Accountant' && req.status === 'Journal Entry' && (
+              )}
+
+              {/* SA — verify or reject */}
+              {user?.role === 'Accountant' && req.status === 'Journal Review' && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-slate-600">Junior Accountant has completed the journal entry. Verify and send to Finance Manager, or reject to return.</p>
+                  <div className="flex gap-3">
                     <button
-                      onClick={() => setJournalModal(true)}
-                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                      onClick={async () => {
+                        setActionLoading(true);
+                        try {
+                          await approvalService.approve(id, 'Journal entry verified by SA. Forwarded to Finance Manager.');
+                          toast.success('✅ Verified — sent to Finance Manager.');
+                          const { data } = await approvalService.getOne(id); setReq(data.requirement);
+                        } catch (e) { toast.error(e.message || 'Failed'); }
+                        finally { setActionLoading(false); }
+                      }}
+                      disabled={actionLoading}
+                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
-                      📝 Make Journal Entry
+                      {actionLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+                      ✓ Verify — Send to Finance Manager
                     </button>
-                  )}
-                  {user?.role !== 'Junior Accountant' && req.status === 'Journal Entry' && (
-                    <p className="text-sm text-amber-600 italic">⏳ Junior Accountant is entering the journal entry...</p>
-                  )}
+                    <button onClick={() => setModal('reject')} className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">
+                      ✕ Reject
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* FM — approve / reject / return */}
+              {user?.role === 'Finance Manager' && req.status === 'FM Verification' && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-slate-600">Senior Accountant has verified the journal entry. Approve to send back to SA for payment, or reject/return.</p>
+                  <div className="flex gap-3 flex-wrap">
+                    <button
+                      onClick={async () => {
+                        setActionLoading(true);
+                        try {
+                          await approvalService.approve(id, 'Payment approved by Finance Manager. SA to make payment.');
+                          toast.success('✅ Approved — sent to Senior Accountant for payment.');
+                          const { data } = await approvalService.getOne(id); setReq(data.requirement);
+                        } catch (e) { toast.error(e.message || 'Failed'); }
+                        finally { setActionLoading(false); }
+                      }}
+                      disabled={actionLoading}
+                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {actionLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+                      ✓ Approve
+                    </button>
+                    <button onClick={() => setModal('return')} className="rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-100">↩ Return</button>
+                    <button onClick={() => setModal('reject')} className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">✕ Reject</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Waiting states for other roles */}
+              {req.status === 'Journal Entry' && user?.role !== 'Junior Accountant' && (
+                <p className="text-sm text-amber-600 italic">⏳ Awaiting Junior Accountant to complete journal entry...</p>
+              )}
+              {req.status === 'Journal Review' && user?.role !== 'Accountant' && (
+                <p className="text-sm text-amber-600 italic">⏳ Awaiting Senior Accountant to verify journal entry...</p>
+              )}
+              {req.status === 'FM Verification' && user?.role !== 'Finance Manager' && (
+                <p className="text-sm text-amber-600 italic">⏳ Awaiting Finance Manager approval...</p>
+              )}
+              {['Payment Entry','Filing','Paid','Completed'].includes(req.status) && (
+                <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
+                  <span>✅</span><span className="text-sm font-semibold text-emerald-700">Journal entry completed &amp; verified</span>
                 </div>
               )}
             </Section>
           )}
 
-          {/* ── Payment Record (visible from Payment Entry stage onwards) ── */}
-          {(req.paymentRecord?.paymentRef || ['Payment Entry','Filing','Paid','Completed'].includes(req.status)) && (
-            <Section title="💳 Payment Record">
-              {req.paymentRecord?.paymentRef ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-2">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
-                    <div><p className="text-xs text-slate-400">Payment Ref</p><p className="font-bold text-amber-800">{req.paymentRecord.paymentRef}</p></div>
-                    <div><p className="text-xs text-slate-400">Date</p><p className="font-medium text-slate-800">{req.paymentRecord.paymentDate ? new Date(req.paymentRecord.paymentDate).toLocaleDateString() : '—'}</p></div>
-                    <div><p className="text-xs text-slate-400">Amount Paid</p><p className="font-bold text-emerald-700">AED {(req.paymentRecord.amountPaid || 0).toLocaleString()}</p></div>
-                    <div><p className="text-xs text-slate-400">Method</p><p className="font-medium text-slate-800">{req.paymentRecord.paymentMethod || '—'}</p></div>
-                    <div><p className="text-xs text-slate-400">Bank</p><p className="font-medium text-slate-800">{req.paymentRecord.bankName || '—'}</p></div>
-                    <div><p className="text-xs text-slate-400">Currency</p><p className="font-medium text-slate-800">{req.paymentRecord.currency || 'AED'}</p></div>
-                    {req.paymentRecord.notes && <div className="sm:col-span-3"><p className="text-xs text-slate-400">Notes</p><p className="text-sm text-slate-700 italic">{req.paymentRecord.notes}</p></div>}
+          {/* ── Payment Entry Stage ────────────────────────────────────── */}
+          {['Payment Entry','Filing','Paid','Completed'].includes(req.status) && (
+            <Section title="💳 Payment">
+              {/* SA — payment completed + optional upload */}
+              {user?.role === 'Accountant' && req.status === 'Payment Entry' && (
+                <div className="flex flex-col gap-4">
+                  <p className="text-sm text-slate-600">Finance Manager has approved payment. Make the payment, optionally upload a payment receipt, then confirm.</p>
+
+                  {/* Optional payment document upload */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Payment Receipt / Proof <span className="text-slate-400 font-normal">(Optional)</span></label>
+                    {paymentFile ? (
+                      <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span>📄</span>
+                          <span className="text-xs font-medium text-amber-800 truncate max-w-[260px]">{paymentFile.name}</span>
+                        </div>
+                        <button type="button" onClick={() => setPaymentFile(null)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                      </div>
+                    ) : (
+                      <div onClick={() => paymentFileRef.current?.click()}
+                        className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
+                        <p className="text-sm text-slate-500">📎 Click to upload payment receipt</p>
+                        <p className="text-xs text-slate-400 mt-0.5">PDF, JPG, PNG · Optional</p>
+                      </div>
+                    )}
+                    <input ref={paymentFileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+                      onChange={e => e.target.files[0] && setPaymentFile(e.target.files[0])} />
                   </div>
-                  {req.paymentRecord.recordedByName && (
-                    <p className="text-xs text-slate-400 pt-2 border-t border-amber-200">
-                      Recorded by <span className="font-semibold text-slate-600">{req.paymentRecord.recordedByName}</span>
-                      {req.paymentRecord.recordedAt && ` · ${new Date(req.paymentRecord.recordedAt).toLocaleString()}`}
-                    </p>
-                  )}
-                  {['Paid','Completed','Filing'].includes(req.status) && (
-                    <div className="flex items-center gap-2 rounded-lg bg-emerald-100 px-3 py-2 mt-2">
-                      <span className="text-lg">✅</span>
-                      <span className="text-sm font-semibold text-emerald-800">Payment Completed</span>
-                    </div>
-                  )}
+
+                  <button
+                    onClick={handlePaymentDone}
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50 w-fit"
+                  >
+                    {actionLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+                    💳 Payment Completed — Send to Junior Accountant for Filing
+                  </button>
                 </div>
-              ) : (
-                <p className="text-sm text-slate-400 italic">
-                  {req.status === 'Payment Entry' ? '⏳ Senior Accountant is entering payment details...' : 'No payment record yet.'}
-                </p>
+              )}
+
+              {req.status === 'Payment Entry' && user?.role !== 'Accountant' && (
+                <p className="text-sm text-amber-600 italic">⏳ Senior Accountant is making the payment...</p>
+              )}
+
+              {/* Payment done — show record */}
+              {['Filing','Paid','Completed'].includes(req.status) && (
+                <div className="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
+                  <span className="text-2xl">✅</span>
+                  <div>
+                    <p className="text-sm font-bold text-emerald-800">Payment Completed</p>
+                    {req.paymentRecord?.paymentRef && <p className="text-xs text-emerald-700">Ref: {req.paymentRecord.paymentRef}</p>}
+                  </div>
+                  {req.paymentRecord?.document?.path && <FileLinks path={req.paymentRecord.document.path} name={req.paymentRecord.document.originalName} />}
+                </div>
+              )}
+
+              {/* JA — filing button */}
+              {user?.role === 'Junior Accountant' && req.status === 'Filing' && (
+                <div className="mt-4 flex flex-col gap-3">
+                  <p className="text-sm text-slate-600">Payment has been made. File all procurement documents to close the cycle.</p>
+                  <button
+                    onClick={handleFiling}
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 w-fit"
+                  >
+                    {actionLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+                    📁 Documents Filed — Mark as Paid ✅
+                  </button>
+                </div>
+              )}
+              {req.status === 'Filing' && user?.role !== 'Junior Accountant' && (
+                <p className="text-sm text-amber-600 italic mt-3">⏳ Junior Accountant is filing documents...</p>
               )}
             </Section>
           )}

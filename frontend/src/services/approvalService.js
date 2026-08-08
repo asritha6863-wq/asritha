@@ -85,8 +85,15 @@ const approvalService = {
     api.post(`/approval/requirements/${id}/three-way-reject`, payload),
 
   // ── Junior Accountant: save payment record ────────────────────────────────
-  savePaymentRecord: (id, data) =>
-    api.post(`/approval/requirements/${id}/save-payment-record`, data),
+  savePaymentRecord: (id, data) => {
+    // data can be plain object or FormData (when file is attached)
+    if (data instanceof FormData) {
+      return api.post(`/approval/requirements/${id}/save-payment-record`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    }
+    return api.post(`/approval/requirements/${id}/save-payment-record`, data);
+  },
 
   saveJournalEntry: (id, data, file) => {
     const form = new FormData();

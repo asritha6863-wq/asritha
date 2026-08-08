@@ -85,8 +85,8 @@ router.post('/requirements/:id/save-po-details',           idVal, validate, save
 // Journal entry (Junior Accountant) — supports optional file upload
 router.post('/requirements/:id/save-journal-entry', idVal, validate, handleUpload, saveJournalEntry);
 
-// Payment record (Senior Accountant)
-router.post('/requirements/:id/save-payment-record',       idVal, validate, savePaymentRecord);
+// Payment record (Senior Accountant) — supports optional file upload
+router.post('/requirements/:id/save-payment-record', idVal, validate, handleUpload, savePaymentRecord);
 
 // Three-way match rejection (Accountant)
 router.post('/requirements/:id/three-way-reject',          idVal, noteReq, validate, threeWayReject);

@@ -1234,13 +1234,25 @@ exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
   requirement.paymentRecord = {
     ...requirement.paymentRecord,
     paymentDate:   d.paymentDate   ? new Date(d.paymentDate) : new Date(),
-    paymentRef:    d.paymentRef    || '',
-    paymentMethod: d.paymentMethod || '',
+    paymentRef:    d.paymentRef    || `PAY-${requirement.requirementNumber}`,
+    paymentMethod: d.paymentMethod || 'Bank Transfer',
     bankName:      d.bankName      || '',
     amountPaid:    Number(d.amountPaid) || requirement.invoiceAmount || requirement.estimatedTotalPrice || 0,
     currency:      d.currency      || 'AED',
     notes:         d.notes         || '',
   };
+  // Optional payment receipt file
+  const f = (req.files && req.files[0]) || req.file;
+  if (f) {
+    requirement.paymentRecord.document = {
+      originalName: f.originalname,
+      filename:     f.filename,
+      path:         f.path,
+      mimeType:     f.mimetype,
+      size:         f.size,
+      uploadedAt:   new Date(),
+    };
+  }
   requirement.markModified('paymentRecord');
   requirement.updatedBy = req.user._id;
   requirement.timeline.push(makeTimeline(req, 'Payment Details Saved', requirement.status, requirement.status,
