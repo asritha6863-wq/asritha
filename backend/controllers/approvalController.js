@@ -1231,8 +1231,7 @@ exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Only Senior Accountant can record payment details', 403));
 
   const d = req.body;
-  requirement.paymentRecord = {
-    ...requirement.paymentRecord,
+  const paymentData = {
     paymentDate:   d.paymentDate   ? new Date(d.paymentDate) : new Date(),
     paymentRef:    d.paymentRef    || `PAY-${requirement.requirementNumber}`,
     paymentMethod: d.paymentMethod || 'Bank Transfer',
@@ -1241,10 +1240,10 @@ exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
     currency:      d.currency      || 'AED',
     notes:         d.notes         || '',
   };
-  // Optional payment receipt file — only set if actually uploaded
+  // Only attach document if a real file was uploaded
   const f = (req.files && req.files.length > 0 && req.files[0]) || req.file;
   if (f && f.path) {
-    requirement.paymentRecord.document = {
+    paymentData.document = {
       originalName: f.originalname,
       filename:     f.filename || '',
       path:         f.path,
@@ -1253,6 +1252,7 @@ exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
       uploadedAt:   new Date(),
     };
   }
+  requirement.paymentRecord = { ...requirement.paymentRecord, ...paymentData };
   requirement.markModified('paymentRecord');
   requirement.updatedBy = req.user._id;
   requirement.timeline.push(makeTimeline(req, 'Payment Details Saved', requirement.status, requirement.status,
