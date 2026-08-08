@@ -3,7 +3,7 @@
  * SE enters structured PO details → saves → auto-generates formatted printable PO PDF
  * Status: PO Pending — NO file upload needed, poDetails IS the PO
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import approvalService from '../../services/approvalService';
 import StatusBadge from '../../components/requirements/StatusBadge';

@@ -60,11 +60,12 @@ const Notifications = () => {
       const params = { page: pg, limit: 20 };
       if (currentTab === 'unread') params.unreadOnly = 'true';
       const { data } = await notificationService.getAll(params);
-      setNotifications(data.notifications);
-      setTotal(data.total);
-      setPages(data.pages);
-      setUnreadCount(data.unreadCount);
-    } catch {
+      setNotifications(data.notifications || []);
+      setTotal(data.total || 0);
+      setPages(data.pages || 1);
+      setUnreadCount(data.unreadCount || 0);
+    } catch (err) {
+      console.error('Notifications error:', err);
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
