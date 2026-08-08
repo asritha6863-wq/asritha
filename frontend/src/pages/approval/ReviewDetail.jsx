@@ -884,6 +884,95 @@ const ReviewDetail = () => {
             </Section>
           )}
 
+          {/* ── Journal Entry (visible from Journal Entry stage onwards) ── */}
+          {(req.journalEntry?.entryNumber || ['Journal Entry','Journal Review','FM Verification','Payment Entry','Filing','Paid','Completed'].includes(req.status)) && (
+            <Section title="📝 Journal Entry">
+              {req.journalEntry?.entryNumber ? (
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-2">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
+                    <div><p className="text-xs text-slate-400">Entry #</p><p className="font-bold text-indigo-800">{req.journalEntry.entryNumber}</p></div>
+                    <div><p className="text-xs text-slate-400">Date</p><p className="font-medium text-slate-800">{req.journalEntry.entryDate ? new Date(req.journalEntry.entryDate).toLocaleDateString() : '—'}</p></div>
+                    <div><p className="text-xs text-slate-400">Amount</p><p className="font-bold text-indigo-700">AED {(req.journalEntry.amount || 0).toLocaleString()}</p></div>
+                    <div><p className="text-xs text-slate-400">Debit A/c</p><p className="font-medium text-slate-800">{req.journalEntry.debitAccount || '—'}</p></div>
+                    <div><p className="text-xs text-slate-400">Credit A/c</p><p className="font-medium text-slate-800">{req.journalEntry.creditAccount || '—'}</p></div>
+                    {req.journalEntry.narration && <div className="sm:col-span-3"><p className="text-xs text-slate-400">Narration</p><p className="text-sm text-slate-700 italic">{req.journalEntry.narration}</p></div>}
+                  </div>
+                  {req.journalEntry.enteredByName && (
+                    <p className="text-xs text-slate-400 pt-2 border-t border-indigo-200">
+                      Entered by <span className="font-semibold text-slate-600">{req.journalEntry.enteredByName}</span>
+                      {req.journalEntry.enteredAt && ` · ${new Date(req.journalEntry.enteredAt).toLocaleString()}`}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 italic">
+                  {req.status === 'Journal Entry' ? '⏳ Junior Accountant is entering the journal entry...' : 'No journal entry yet.'}
+                </p>
+              )}
+            </Section>
+          )}
+
+          {/* ── Payment Record (visible from Payment Entry stage onwards) ── */}
+          {(req.paymentRecord?.paymentRef || ['Payment Entry','Filing','Paid','Completed'].includes(req.status)) && (
+            <Section title="💳 Payment Record">
+              {req.paymentRecord?.paymentRef ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-2">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
+                    <div><p className="text-xs text-slate-400">Payment Ref</p><p className="font-bold text-amber-800">{req.paymentRecord.paymentRef}</p></div>
+                    <div><p className="text-xs text-slate-400">Date</p><p className="font-medium text-slate-800">{req.paymentRecord.paymentDate ? new Date(req.paymentRecord.paymentDate).toLocaleDateString() : '—'}</p></div>
+                    <div><p className="text-xs text-slate-400">Amount Paid</p><p className="font-bold text-emerald-700">AED {(req.paymentRecord.amountPaid || 0).toLocaleString()}</p></div>
+                    <div><p className="text-xs text-slate-400">Method</p><p className="font-medium text-slate-800">{req.paymentRecord.paymentMethod || '—'}</p></div>
+                    <div><p className="text-xs text-slate-400">Bank</p><p className="font-medium text-slate-800">{req.paymentRecord.bankName || '—'}</p></div>
+                    <div><p className="text-xs text-slate-400">Currency</p><p className="font-medium text-slate-800">{req.paymentRecord.currency || 'AED'}</p></div>
+                    {req.paymentRecord.notes && <div className="sm:col-span-3"><p className="text-xs text-slate-400">Notes</p><p className="text-sm text-slate-700 italic">{req.paymentRecord.notes}</p></div>}
+                  </div>
+                  {req.paymentRecord.recordedByName && (
+                    <p className="text-xs text-slate-400 pt-2 border-t border-amber-200">
+                      Recorded by <span className="font-semibold text-slate-600">{req.paymentRecord.recordedByName}</span>
+                      {req.paymentRecord.recordedAt && ` · ${new Date(req.paymentRecord.recordedAt).toLocaleString()}`}
+                    </p>
+                  )}
+                  {['Paid','Completed','Filing'].includes(req.status) && (
+                    <div className="flex items-center gap-2 rounded-lg bg-emerald-100 px-3 py-2 mt-2">
+                      <span className="text-lg">✅</span>
+                      <span className="text-sm font-semibold text-emerald-800">Payment Completed</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 italic">
+                  {req.status === 'Payment Entry' ? '⏳ Senior Accountant is entering payment details...' : 'No payment record yet.'}
+                </p>
+              )}
+            </Section>
+          )}
+
+          {/* ── Filing Status ─────────────────────────────────────────────── */}
+          {['Filing','Paid','Completed'].includes(req.status) && (
+            <Section title="📁 Filing & Closure">
+              {req.status === 'Filing' ? (
+                <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 flex items-center gap-3">
+                  <span className="text-2xl">⏳</span>
+                  <div>
+                    <p className="text-sm font-semibold text-cyan-800">Awaiting document filing by Junior Accountant</p>
+                    <p className="text-xs text-cyan-700">JA will file PO, GRN, Invoice, Journal Entry and Payment records.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 flex items-center gap-3">
+                  <span className="text-3xl">🎉</span>
+                  <div>
+                    <p className="text-sm font-bold text-emerald-800">Procurement Cycle Complete</p>
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      All documents filed. Payment processed. 
+                      {req.paymentRecord?.paymentRef && ` Ref: ${req.paymentRecord.paymentRef}.`}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </Section>
+          )}
+
           {/* Comments */}
           <Section title="Comments">
             {!req.comments?.length ? <p className="text-sm text-slate-400 italic mb-4">No comments yet.</p> : (
