@@ -160,7 +160,7 @@ export const buildPOHtml = (po, req) => {
     </div>
 
     <!-- ══ SIGNATORIES ══ -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid ${GREY_LINE}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid ${GREY_LINE};page-break-inside:avoid">
       ${[
         [po.authorizedBy||'[Name]',   po.authorizedTitle||'[Designation]',  'Authorized Signatory'],
         [po.authorizedBy2||'[Name]',  po.authorizedTitle2||'[Designation]', 'Authorized Signatory'],
@@ -174,7 +174,7 @@ export const buildPOHtml = (po, req) => {
     </div>
 
     <!-- ══ VENDOR ACCEPTANCE ══ -->
-    <div style="margin:0;border:2px solid ${PINK_DARK};background:${PINK_PALE}">
+    <div style="margin:0;border:2px solid ${PINK_DARK};background:${PINK_PALE};page-break-inside:avoid">
       <div style="background:${PINK_DARK};padding:8px 20px;font-size:11px;font-weight:800;color:#fff;text-align:center;letter-spacing:2px;text-transform:uppercase">
         Accepted the Purchase Order
       </div>
@@ -192,7 +192,7 @@ export const buildPOHtml = (po, req) => {
     </div>
 
     <!-- ══ FOOTER ══ -->
-    <div style="background:${PINK_LIGHT};padding:8px 20px;display:flex;justify-content:space-between;align-items:center;border-top:2px solid ${PINK_MID}">
+    <div style="background:${PINK_LIGHT};padding:8px 20px;display:flex;justify-content:space-between;align-items:center;border-top:2px solid ${PINK_MID};page-break-inside:avoid">
       <div style="font-size:9px;color:${TEXT_MID};font-weight:700;letter-spacing:1px">NiSHKA · MOMENTOUS JEWELLERY</div>
       <div style="font-size:9px;color:#999">PO# ${po.poNumber||'—'} · ${poDate} · Computer Generated</div>
     </div>
@@ -202,6 +202,7 @@ export const buildPOHtml = (po, req) => {
 
 /**
  * Opens a new window with the formatted NiSHKA PO and triggers the print dialog.
+ * The print window also has a Download PDF button.
  */
 export const printPO = (po, req) => {
   const html = buildPOHtml(po, req);
@@ -214,16 +215,33 @@ export const printPO = (po, req) => {
   <title>Purchase Order — ${po.poNumber||req?.requirementNumber||'PO'}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, Helvetica, sans-serif; background: #fff; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f5f5f5; }
+    #actions { padding: 12px 20px; background: #fff; border-bottom: 1px solid #ddd; display: flex; gap: 10px; }
+    #actions button { padding: 8px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+    #btn-print { background: #8B1A4A; color: #fff; }
+    #btn-print:hover { background: #6d1239; }
+    #btn-close { background: #f1f1f1; color: #333; }
+    #po-wrapper { max-width: 780px; margin: 20px auto; background: #fff; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
     @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      @page { margin: 0; size: A4; }
+      #actions { display: none !important; }
+      body { background: #fff; }
+      #po-wrapper { margin: 0; box-shadow: none; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      @page { margin: 0.5cm; size: A4; }
     }
   </style>
 </head>
-<body>${html}</body>
+<body>
+  <div id="actions">
+    <button id="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <button id="btn-close" onclick="window.close()">✕ Close</button>
+    <span style="font-size:12px;color:#666;align-self:center;margin-left:8px">
+      Tip: In the print dialog, choose "Save as PDF" to download.
+    </span>
+  </div>
+  <div id="po-wrapper">${html}</div>
+</body>
 </html>`);
   w.document.close();
   w.focus();
-  setTimeout(() => { w.print(); }, 500);
 };

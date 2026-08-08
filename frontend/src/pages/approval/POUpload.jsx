@@ -575,35 +575,6 @@ const POUpload = () => {
               </Field>
             </div>
           </div>
-
-          {/* Authorization */}
-          <div className="card p-6 space-y-4">
-            <h3 className="border-b border-slate-200 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Authorized Signatories</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-slate-500">Signatory 1</p>
-                <Field label="Name">
-                  <input type="text" className="input-field w-full" readOnly={!canEdit}
-                    value={po.authorizedBy} onChange={e => set('authorizedBy', e.target.value)} />
-                </Field>
-                <Field label="Designation / Title">
-                  <input type="text" className="input-field w-full" readOnly={!canEdit}
-                    value={po.authorizedTitle} onChange={e => set('authorizedTitle', e.target.value)} />
-                </Field>
-              </div>
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-slate-500">Signatory 2</p>
-                <Field label="Name">
-                  <input type="text" className="input-field w-full" readOnly={!canEdit}
-                    value={po.authorizedBy2} onChange={e => set('authorizedBy2', e.target.value)} />
-                </Field>
-                <Field label="Designation / Title">
-                  <input type="text" className="input-field w-full" readOnly={!canEdit}
-                    value={po.authorizedTitle2} onChange={e => set('authorizedTitle2', e.target.value)} />
-                </Field>
-              </div>
-            </div>
-          </div>
         </>
       )}
 
