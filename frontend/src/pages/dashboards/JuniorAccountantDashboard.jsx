@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import approvalService from '../../services/approvalService';
@@ -21,19 +21,29 @@ const StatCard = ({ label, value, color, bg, emoji, pulse }) => (
 
 // ── Journal Entry Modal ───────────────────────────────────────────────────────
 const JournalModal = ({ req, onClose, onSave, loading }) => {
+  const fileRef = React.useRef(null);
   const [form, setForm] = useState({
     entryNumber:   '',
     entryDate:     today(),
+    voucherType:   'Payment Voucher',
+    referenceNo:   '',
     debitAccount:  '',
     creditAccount: '',
     amount:        req?.invoiceAmount || req?.estimatedTotalPrice || '',
     narration:     `Payment for ${req?.itemName || ''} — ${req?.requirementNumber || ''}`,
   });
+  const [file, setFile]         = useState(null);
+  const [filePreview, setFilePreview] = useState('');
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const handleFile = (e) => {
+    const f = e.target.files[0];
+    if (f) { setFile(f); setFilePreview(f.name); }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 overflow-y-auto" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl my-4" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl my-4" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-xl">📝</div>
           <div className="flex-1 min-w-0">
@@ -42,7 +52,17 @@ const JournalModal = ({ req, onClose, onSave, loading }) => {
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
         </div>
+
         <div className="px-6 py-5 space-y-4">
+          {/* Requirement summary strip */}
+          <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 grid grid-cols-2 gap-2 text-xs">
+            <div><span className="text-slate-400">Req #: </span><span className="font-semibold">{req?.requirementNumber}</span></div>
+            <div><span className="text-slate-400">Invoice: </span><span className="font-semibold">AED {(req?.invoiceAmount || req?.estimatedTotalPrice || 0).toLocaleString()}</span></div>
+            <div><span className="text-slate-400">Vendor: </span><span className="font-semibold">{req?.poDetails?.toName || '—'}</span></div>
+            <div><span className="text-slate-400">Inv #: </span><span className="font-semibold">{req?.invoiceNumber || '—'}</span></div>
+          </div>
+
+          {/* Form fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Entry Number <span className="text-red-500">*</span></label>
@@ -51,6 +71,16 @@ const JournalModal = ({ req, onClose, onSave, loading }) => {
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Entry Date</label>
               <input type="date" className="input-field w-full" value={form.entryDate} onChange={e => set('entryDate', e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Voucher Type</label>
+              <select className="input-field w-full" value={form.voucherType} onChange={e => set('voucherType', e.target.value)}>
+                {['Payment Voucher','Journal Voucher','Receipt Voucher','Contra Voucher','Purchase Voucher'].map(v => <option key={v}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Reference No.</label>
+              <input type="text" className="input-field w-full" placeholder="e.g. REF-2024-001" value={form.referenceNo} onChange={e => set('referenceNo', e.target.value)} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Debit Account</label>
@@ -65,22 +95,40 @@ const JournalModal = ({ req, onClose, onSave, loading }) => {
               <input type="number" className="input-field w-full" min="0" value={form.amount} onChange={e => set('amount', e.target.value)} />
             </div>
           </div>
+
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Narration</label>
             <textarea rows={2} className="input-field w-full resize-none text-sm" value={form.narration} onChange={e => set('narration', e.target.value)} />
           </div>
-          {/* Summary */}
-          <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 grid grid-cols-2 gap-2 text-xs">
-            <div><span className="text-slate-400">Req #: </span><span className="font-semibold">{req?.requirementNumber}</span></div>
-            <div><span className="text-slate-400">Invoice: </span><span className="font-semibold">AED {(req?.invoiceAmount || req?.estimatedTotalPrice || 0).toLocaleString()}</span></div>
-            <div><span className="text-slate-400">Vendor: </span><span className="font-semibold">{req?.poDetails?.toName || '—'}</span></div>
-            <div><span className="text-slate-400">Inv #: </span><span className="font-semibold">{req?.invoiceNumber || '—'}</span></div>
+
+          {/* File Upload */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Journal Voucher / Supporting Document</label>
+            {filePreview ? (
+              <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📄</span>
+                  <span className="text-xs font-medium text-blue-800 truncate max-w-[240px]">{filePreview}</span>
+                </div>
+                <button type="button" onClick={() => { setFile(null); setFilePreview(''); }} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+              >
+                <p className="text-sm text-slate-500">📎 Click to upload journal voucher PDF</p>
+                <p className="text-xs text-slate-400 mt-0.5">PDF, JPG, PNG · Max 20 MB · Optional</p>
+              </div>
+            )}
+            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFile} />
           </div>
         </div>
+
         <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
           <button onClick={onClose} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
           <button
-            onClick={() => form.entryNumber.trim() ? onSave(form) : toast.error('Entry number is required')}
+            onClick={() => form.entryNumber.trim() ? onSave(form, file) : toast.error('Entry number is required')}
             disabled={loading}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
@@ -129,10 +177,10 @@ const JuniorAccountantDashboard = () => {
     } catch { toast.error('Failed to load details'); }
   };
 
-  const handleJournalSubmit = async (form) => {
+  const handleJournalSubmit = async (form, file) => {
     setModalLoading(true);
     try {
-      await approvalService.saveJournalEntry(modalReq._id, form);
+      await approvalService.saveJournalEntry(modalReq._id, form, file);
       await approvalService.approve(modalReq._id, `Journal entry submitted. Entry#: ${form.entryNumber}`);
       toast.success('✅ Journal entry submitted to Senior Accountant for review.');
       setModalReq(null);

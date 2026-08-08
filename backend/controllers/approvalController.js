@@ -1185,7 +1185,31 @@ exports.saveJournalEntry = asyncHandler(async (req, res, next) => {
     amount:        Number(d.amount) || requirement.invoiceAmount || requirement.estimatedTotalPrice || 0,
     narration:     d.narration     || '',
     entryDate:     d.entryDate ? new Date(d.entryDate) : new Date(),
+    voucherType:   d.voucherType   || '',
+    referenceNo:   d.referenceNo   || '',
   };
+  // Attach uploaded journal voucher document if provided
+  if (req.files && req.files.length > 0) {
+    const f = req.files[0];
+    requirement.journalEntry.document = {
+      originalName: f.originalname,
+      filename:     f.filename,
+      path:         f.path,
+      mimeType:     f.mimetype,
+      size:         f.size,
+      uploadedAt:   new Date(),
+    };
+  } else if (req.file) {
+    const f = req.file;
+    requirement.journalEntry.document = {
+      originalName: f.originalname,
+      filename:     f.filename,
+      path:         f.path,
+      mimeType:     f.mimetype,
+      size:         f.size,
+      uploadedAt:   new Date(),
+    };
+  }
   requirement.markModified('journalEntry');
   requirement.updatedBy = req.user._id;
   requirement.timeline.push(makeTimeline(req, 'Journal Entry Saved', requirement.status, requirement.status,

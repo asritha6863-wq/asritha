@@ -233,6 +233,16 @@ const RequirementSchema = new mongoose.Schema({
     amount:        { type: Number, min: 0 },
     narration:     { type: String, trim: true, maxlength: 1000 },
     entryDate:     { type: Date },
+    voucherType:   { type: String, trim: true },       // e.g. Payment Voucher, Journal Voucher
+    referenceNo:   { type: String, trim: true },       // ledger/voucher reference
+    document: {                                        // uploaded journal voucher PDF
+      originalName: { type: String },
+      filename:     { type: String },
+      path:         { type: String },
+      mimeType:     { type: String },
+      size:         { type: Number },
+      uploadedAt:   { type: Date, default: Date.now },
+    },
     enteredBy:     { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     enteredByName: { type: String },
     enteredAt:     { type: Date },

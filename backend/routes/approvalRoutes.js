@@ -82,8 +82,8 @@ router.post('/requirements/:id/save-quotation-comparison', idVal, validate, hand
 // Structured PO details (SE enters form fields — no file upload)
 router.post('/requirements/:id/save-po-details',           idVal, validate, savePoDetails);
 
-// Journal entry (Junior Accountant)
-router.post('/requirements/:id/save-journal-entry',        idVal, validate, saveJournalEntry);
+// Journal entry (Junior Accountant) — supports optional file upload
+router.post('/requirements/:id/save-journal-entry', idVal, validate, handleUpload, saveJournalEntry);
 
 // Payment record (Senior Accountant)
 router.post('/requirements/:id/save-payment-record',       idVal, validate, savePaymentRecord);

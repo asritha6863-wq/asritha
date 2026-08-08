@@ -893,6 +893,8 @@ const ReviewDetail = () => {
                     <div><p className="text-xs text-slate-400">Entry #</p><p className="font-bold text-indigo-800">{req.journalEntry.entryNumber}</p></div>
                     <div><p className="text-xs text-slate-400">Date</p><p className="font-medium text-slate-800">{req.journalEntry.entryDate ? new Date(req.journalEntry.entryDate).toLocaleDateString() : '—'}</p></div>
                     <div><p className="text-xs text-slate-400">Amount</p><p className="font-bold text-indigo-700">AED {(req.journalEntry.amount || 0).toLocaleString()}</p></div>
+                    {req.journalEntry.voucherType && <div><p className="text-xs text-slate-400">Voucher Type</p><p className="font-medium text-slate-800">{req.journalEntry.voucherType}</p></div>}
+                    {req.journalEntry.referenceNo  && <div><p className="text-xs text-slate-400">Reference No</p><p className="font-medium text-slate-800">{req.journalEntry.referenceNo}</p></div>}
                     <div><p className="text-xs text-slate-400">Debit A/c</p><p className="font-medium text-slate-800">{req.journalEntry.debitAccount || '—'}</p></div>
                     <div><p className="text-xs text-slate-400">Credit A/c</p><p className="font-medium text-slate-800">{req.journalEntry.creditAccount || '—'}</p></div>
                     {req.journalEntry.narration && <div className="sm:col-span-3"><p className="text-xs text-slate-400">Narration</p><p className="text-sm text-slate-700 italic">{req.journalEntry.narration}</p></div>}
@@ -902,6 +904,18 @@ const ReviewDetail = () => {
                       Entered by <span className="font-semibold text-slate-600">{req.journalEntry.enteredByName}</span>
                       {req.journalEntry.enteredAt && ` · ${new Date(req.journalEntry.enteredAt).toLocaleString()}`}
                     </p>
+                  )}
+                  {req.journalEntry.document?.path && (
+                    <div className="flex items-center justify-between rounded-lg border border-indigo-200 bg-white px-3 py-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📄</span>
+                        <div>
+                          <p className="text-xs font-medium text-slate-800">{req.journalEntry.document.originalName}</p>
+                          <p className="text-xs text-slate-400">Journal Voucher</p>
+                        </div>
+                      </div>
+                      <FileLinks path={req.journalEntry.document.path} name={req.journalEntry.document.originalName} />
+                    </div>
                   )}
                 </div>
               ) : (

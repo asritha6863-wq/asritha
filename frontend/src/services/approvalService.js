@@ -88,8 +88,14 @@ const approvalService = {
   savePaymentRecord: (id, data) =>
     api.post(`/approval/requirements/${id}/save-payment-record`, data),
 
-  saveJournalEntry: (id, data) =>
-    api.post(`/approval/requirements/${id}/save-journal-entry`, data),
+  saveJournalEntry: (id, data, file) => {
+    const form = new FormData();
+    Object.entries(data).forEach(([k, v]) => form.append(k, v ?? ''));
+    if (file) form.append('file', file);
+    return api.post(`/approval/requirements/${id}/save-journal-entry`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export default approvalService;
