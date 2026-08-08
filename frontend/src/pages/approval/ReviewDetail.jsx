@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fileUrl, isLocalPath } from '../../utils/fileUrl';
 import approvalService from '../../services/approvalService';
@@ -118,6 +118,15 @@ const ReviewDetail = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [comment, setComment]       = useState('');
   const [viewerFile, setViewerFile] = useState(null); // { path, name }
+  const [journalModal, setJournalModal] = useState(false);
+  const [journalForm, setJournalForm]   = useState({
+    entryNumber: '', entryDate: new Date().toISOString().split('T')[0],
+    voucherType: 'Payment Voucher', referenceNo: '',
+    debitAccount: '', creditAccount: '', amount: '', narration: '',
+  });
+  const [journalFile,    setJournalFile]    = useState(null);
+  const [journalLoading, setJournalLoading] = useState(false);
+  const journalFileRef = useRef(null);
   const [commentLoading, setCommentLoading] = useState(false);
   // SE quotation upload state
   const [quotFiles, setQuotFiles]   = useState([]);
@@ -126,7 +135,14 @@ const ReviewDetail = () => {
   const load = async () => {
     try {
       const { data } = await approvalService.getOne(id);
-      setReq(data.requirement);
+      const r = data.requirement;
+      setReq(r);
+      // Pre-fill journal form with invoice amount and narration
+      setJournalForm(prev => ({
+        ...prev,
+        amount:    r.invoiceAmount || r.estimatedTotalPrice || '',
+        narration: `Payment for ${r.itemName || ''} — ${r.requirementNumber || ''}`,
+      }));
     } catch {
       toast.error('Failed to load requirement');
       navigate(-1);
@@ -167,6 +183,22 @@ const ReviewDetail = () => {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleJournalSubmit = async () => {
+    if (!journalForm.entryNumber.trim()) { toast.error('Entry number is required'); return; }
+    setJournalLoading(true);
+    try {
+      await approvalService.saveJournalEntry(req._id, journalForm, journalFile);
+      await approvalService.approve(req._id, `Journal entry submitted. Entry#: ${journalForm.entryNumber}`);
+      toast.success('✅ Journal entry submitted to Senior Accountant for review.');
+      setJournalModal(false);
+      setJournalFile(null);
+      // Reload requirement
+      const { data } = await approvalService.getOne(req._id);
+      setReq(data.requirement);
+    } catch (err) { toast.error(err.message || 'Failed to submit journal entry'); }
+    finally { setJournalLoading(false); }
   };
 
   const handleComment = async () => {
@@ -919,9 +951,23 @@ const ReviewDetail = () => {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400 italic">
-                  {req.status === 'Journal Entry' ? '⏳ Junior Accountant is entering the journal entry...' : 'No journal entry yet.'}
-                </p>
+                <div>
+                  <p className="text-sm text-slate-400 italic mb-3">
+                    {req.status === 'Journal Entry' ? '' : 'No journal entry yet.'}
+                  </p>
+                  {/* JA action button — shown only when status is Journal Entry and user is JA */}
+                  {user?.role === 'Junior Accountant' && req.status === 'Journal Entry' && (
+                    <button
+                      onClick={() => setJournalModal(true)}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      📝 Make Journal Entry
+                    </button>
+                  )}
+                  {user?.role !== 'Junior Accountant' && req.status === 'Journal Entry' && (
+                    <p className="text-sm text-amber-600 italic">⏳ Junior Accountant is entering the journal entry...</p>
+                  )}
+                </div>
               )}
             </Section>
           )}
@@ -1074,6 +1120,98 @@ const ReviewDetail = () => {
           name={viewerFile.name}
           onClose={() => setViewerFile(null)}
         />
+      )}
+
+      {/* ── Journal Entry Modal (JA inline) ─────────────────────────────── */}
+      {journalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto" onClick={() => setJournalModal(false)}>
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl my-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-xl">📝</div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-slate-900">Journal Entry</h3>
+                <p className="text-xs text-slate-500 mt-0.5 truncate">{req?.requirementNumber} — {req?.itemName}</p>
+              </div>
+              <button onClick={() => setJournalModal(false)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {/* Req summary */}
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 grid grid-cols-2 gap-2 text-xs">
+                <div><span className="text-slate-400">Req #: </span><span className="font-semibold">{req?.requirementNumber}</span></div>
+                <div><span className="text-slate-400">Invoice: </span><span className="font-semibold">AED {(req?.invoiceAmount || req?.estimatedTotalPrice || 0).toLocaleString()}</span></div>
+                <div><span className="text-slate-400">Vendor: </span><span className="font-semibold">{req?.poDetails?.toName || '—'}</span></div>
+                <div><span className="text-slate-400">Inv #: </span><span className="font-semibold">{req?.invoiceNumber || '—'}</span></div>
+              </div>
+
+              {/* Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  ['Entry Number *', 'entryNumber', 'text', 'e.g. JE-2024-001'],
+                  ['Entry Date',     'entryDate',   'date', ''],
+                  ['Reference No.',  'referenceNo', 'text', 'e.g. REF-001'],
+                  ['Amount (AED)',   'amount',      'number','0'],
+                  ['Debit Account',  'debitAccount','text', 'e.g. Purchases A/c'],
+                  ['Credit Account', 'creditAccount','text','e.g. Accounts Payable'],
+                ].map(([label, key, type, placeholder]) => (
+                  <div key={key}>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
+                    <input type={type} className="input-field w-full" placeholder={placeholder}
+                      value={journalForm[key]} onChange={e => setJournalForm(p => ({ ...p, [key]: e.target.value }))} />
+                  </div>
+                ))}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Voucher Type</label>
+                  <select className="input-field w-full" value={journalForm.voucherType}
+                    onChange={e => setJournalForm(p => ({ ...p, voucherType: e.target.value }))}>
+                    {['Payment Voucher','Journal Voucher','Receipt Voucher','Contra Voucher','Purchase Voucher'].map(v => <option key={v}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Narration</label>
+                <textarea rows={2} className="input-field w-full resize-none text-sm"
+                  value={journalForm.narration}
+                  onChange={e => setJournalForm(p => ({ ...p, narration: e.target.value }))} />
+              </div>
+
+              {/* File upload */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Journal Voucher Document <span className="text-slate-400 font-normal">(Optional)</span></label>
+                {journalFile ? (
+                  <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span>📄</span>
+                      <span className="text-xs font-medium text-blue-800 truncate max-w-[260px]">{journalFile.name}</span>
+                    </div>
+                    <button type="button" onClick={() => setJournalFile(null)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                  </div>
+                ) : (
+                  <div onClick={() => journalFileRef.current?.click()}
+                    className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                    <p className="text-sm text-slate-500">📎 Click to upload journal voucher PDF</p>
+                    <p className="text-xs text-slate-400 mt-0.5">PDF, JPG, PNG · Max 20 MB</p>
+                  </div>
+                )}
+                <input ref={journalFileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+                  onChange={e => e.target.files[0] && setJournalFile(e.target.files[0])} />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
+              <button onClick={() => setJournalModal(false)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Cancel
+              </button>
+              <button onClick={handleJournalSubmit} disabled={journalLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                {journalLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+                📝 Submit to Senior Accountant
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
