@@ -5,6 +5,7 @@ import useAuth from '../../hooks/useAuth';
 import approvalService from '../../services/approvalService';
 import PriorityBadge from '../../components/requirements/PriorityBadge';
 import ActionModal from '../../components/approval/ActionModal';
+import FileViewer from '../../components/common/FileViewer';
 import { toast } from '../../components/requirements/Toast';
 import NotificationWidget from '../../components/common/NotificationWidget';
 
@@ -32,6 +33,7 @@ const BudgetControllerDashboard = () => {
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [modal, setModal] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [viewerFile, setViewerFile] = useState(null);
 
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
 
@@ -256,8 +258,15 @@ const BudgetControllerDashboard = () => {
                     <td className="px-4 py-3 whitespace-nowrap font-bold text-violet-700">AED {(r.estimatedTotalPrice||0).toLocaleString()}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">{new Date(r.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <button onClick={()=>navigate(`/review/${r._id}`)} className="rounded-md bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100">Review</button>
+                        {r.attachments && r.attachments.length > 0 && (
+                          <button
+                            onClick={() => setViewerFile({ path: r.attachments[0].path, name: r.attachments[0].originalName })}
+                            className="rounded-md bg-pink-50 px-2.5 py-1 text-xs font-semibold text-pink-700 hover:bg-pink-100">
+                            👁️ Doc
+                          </button>
+                        )}
                         <button onClick={()=>setModal({type:'approve',req:r})} className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">✓ Approve</button>
                         <button onClick={()=>setModal({type:'return',req:r})} className="rounded-md bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-100">↩</button>
                         <button onClick={()=>setModal({type:'reject',req:r})} className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100">✕</button>
@@ -297,6 +306,10 @@ const BudgetControllerDashboard = () => {
 
       {modal && (
         <ActionModal type={modal.type} requirement={modal.req} onConfirm={handleAction} onClose={()=>setModal(null)} loading={actionLoading} userRole={user?.role} />
+      )}
+
+      {viewerFile && (
+        <FileViewer path={viewerFile.path} name={viewerFile.name} onClose={() => setViewerFile(null)} />
       )}
 
       <NotificationWidget />
