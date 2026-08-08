@@ -35,6 +35,8 @@ const SeniorEmployeeDashboard = () => {
   const [now, setNow] = useState(new Date());
   const [stats, setStats] = useState(null);
   const [queue, setQueue] = useState([]);
+  const [quotQueue, setQuotQueue] = useState([]);
+  const [queueFilter, setQueueFilter] = useState('pending'); // 'pending' | 'quotation' | 'approved'
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [modal, setModal] = useState(null); // { type, req }
@@ -56,9 +58,14 @@ const SeniorEmployeeDashboard = () => {
   const loadQueue = useCallback(async () => {
     setLoadingQueue(true);
     try {
-      const { data } = await approvalService.getQueue({ limit: 8 });
-      setQueue(data.requirements || []);
-    } catch { /* graceful */ }
+      // Fetch pending review (Submitted) and quotation pending separately
+      const [pendingRes, quotRes] = await Promise.all([
+        approvalService.getQueue({ limit: 20, status: 'Submitted' }),
+        approvalService.getQueue({ limit: 20, status: 'Quotation Pending' }),
+      ]);
+      setQueue(pendingRes.data.requirements || []);
+      setQuotQueue(quotRes.data.requirements || []);
+    } catch { }
     finally { setLoadingQueue(false); }
   }, []);
 
@@ -179,9 +186,9 @@ const SeniorEmployeeDashboard = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatCard emoji="📥" label="Pending Review"    value={pending}                       color="text-amber-600"  bg="bg-amber-50"  onClick={() => navigate('/review/queue')} pulse={pending > 0} />
-            <StatCard emoji="📁" label="Quotation Pending" value={quotPending}                   color="text-cyan-600"   bg="bg-cyan-50"   onClick={() => navigate('/review/queue')} pulse={quotPending > 0} />
-            <StatCard emoji="✅" label="Approved"          value={stats?.stats?.approved ?? 0}   color="text-emerald-600" bg="bg-emerald-50" onClick={() => navigate('/review/queue')} />
+            <StatCard emoji="📥" label="Pending Review"    value={pending}                       color="text-amber-600"  bg="bg-amber-50"  onClick={() => setQueueFilter('pending')} pulse={pending > 0} />
+            <StatCard emoji="📁" label="Quotation Pending" value={quotPending}                   color="text-cyan-600"   bg="bg-cyan-50"   onClick={() => setQueueFilter('quotation')} pulse={quotPending > 0} />
+            <StatCard emoji="✅" label="Approved"          value={stats?.stats?.approved ?? 0}   color="text-emerald-600" bg="bg-emerald-50" onClick={() => setQueueFilter('approved')} />
             <StatCard emoji="❌" label="Rejected"          value={stats?.stats?.rejected ?? 0}   color="text-red-600"    bg="bg-red-50"    onClick={() => navigate('/review/queue')} />
           </div>
         )}
@@ -243,78 +250,104 @@ const SeniorEmployeeDashboard = () => {
       {/* ── Pending Review Queue table ────────────────────────────────────── */}
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-700">Pending Review Queue</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Requirements submitted by employees awaiting your approval</p>
+          <div className="flex items-center gap-3">
+            {/* Filter tabs */}
+            {[
+              { key: 'pending',   label: '📥 Pending Review',    count: queue.length },
+              { key: 'quotation', label: '📁 Quotation Pending',  count: quotQueue.length },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setQueueFilter(tab.key)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  queueFilter === tab.key
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${queueFilter === tab.key ? 'bg-white/20' : 'bg-slate-300'}`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
           <button onClick={() => navigate('/review/queue')} className="text-xs font-medium text-navy-600 hover:underline">View all →</button>
         </div>
 
-        {loadingQueue ? (
-          <div className="space-y-3 p-6">{[1,2,3].map(i => <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-100" />)}</div>
-        ) : queue.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-5xl mb-4">📭</p>
-            <h4 className="text-base font-semibold text-slate-700">No pending reviews</h4>
-            <p className="text-sm text-slate-500 mt-1">All caught up! No requirements need your attention right now.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-left">
-                  {['Req. Number','Employee','Item','Priority','Amount','Status','Date','Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {queue.map(r => (
-                  <tr key={r._id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-navy-700 whitespace-nowrap">{r.requirementNumber}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-medium text-slate-800">{r.employeeName}</p>
-                      <p className="text-xs text-slate-400">{r.employee?.employeeId}</p>
-                    </td>
-                    <td className="px-4 py-3 max-w-[160px] truncate text-slate-700" title={r.itemName}>{r.itemName}</td>
-                    <td className="px-4 py-3 whitespace-nowrap"><PriorityBadge priority={r.priority} /></td>
-                    <td className="px-4 py-3 whitespace-nowrap font-medium text-slate-800">
-                      AED {(r.estimatedTotalPrice || 0).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">{new Date(r.createdAt).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        {r.status === 'Quotation Pending' ? (
-                          <button
-                            onClick={() => navigate(`/review/${r._id}/quotations`)}
-                            className="rounded-md bg-cyan-600 px-3 py-1 text-xs font-semibold text-white hover:bg-cyan-700"
-                          >
-                            📁 Upload Quotations
-                          </button>
-                        ) : r.status === 'PO Pending' ? (
-                          <button
-                            onClick={() => navigate(`/review/${r._id}/po`)}
-                            className="rounded-md bg-sky-600 px-3 py-1 text-xs font-semibold text-white hover:bg-sky-700"
-                          >
-                            🛒 Upload PO
-                          </button>
-                        ) : (
-                          // Normal review actions for Submitted items
-                          <>
-                            <button onClick={() => navigate(`/review/${r._id}`)} className="rounded-md bg-navy-50 px-2.5 py-1 text-xs font-semibold text-navy-700 hover:bg-navy-100">Review</button>
-                            <button onClick={() => setModal({ type: 'approve', req: r })} className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">✓</button>
-                            <button onClick={() => setModal({ type: 'return', req: r })} className="rounded-md bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-100">↩</button>
-                            <button onClick={() => setModal({ type: 'reject', req: r })} className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100">✕</button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+        {(() => {
+          const displayQueue = queueFilter === 'quotation' ? quotQueue : queue;
+          const title = queueFilter === 'quotation'
+            ? 'Requirements awaiting quotation upload'
+            : 'Requirements submitted by employees awaiting your approval';
+
+          return loadingQueue ? (
+            <div className="space-y-3 p-6">{[1,2,3].map(i => <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-100" />)}</div>
+          ) : displayQueue.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-5xl mb-4">{queueFilter === 'quotation' ? '📁' : '📭'}</p>
+              <h4 className="text-base font-semibold text-slate-700">
+                {queueFilter === 'quotation' ? 'No quotations pending' : 'No pending reviews'}
+              </h4>
+              <p className="text-sm text-slate-500 mt-1">
+                {queueFilter === 'quotation'
+                  ? 'No requirements are waiting for quotation upload.'
+                  : 'All caught up! No requirements need your attention right now.'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <p className="px-6 py-2 text-xs text-slate-400">{title}</p>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-left">
+                    {['Req. Number','Employee','Item','Priority','Amount','Status','Date','Actions'].map(h => (
+                      <th key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {displayQueue.map(r => (
+                    <tr key={r._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs font-semibold text-navy-700 whitespace-nowrap">{r.requirementNumber}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <p className="font-medium text-slate-800">{r.employeeName}</p>
+                        <p className="text-xs text-slate-400">{r.employee?.employeeId}</p>
+                      </td>
+                      <td className="px-4 py-3 max-w-[160px] truncate text-slate-700" title={r.itemName}>{r.itemName}</td>
+                      <td className="px-4 py-3 whitespace-nowrap"><PriorityBadge priority={r.priority} /></td>
+                      <td className="px-4 py-3 whitespace-nowrap font-medium text-slate-800">AED {(r.estimatedTotalPrice || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 whitespace-nowrap"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{r.status}</span></td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">{new Date(r.createdAt).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          {r.status === 'Quotation Pending' ? (
+                            <button onClick={() => navigate(`/review/${r._id}/quotations`)} className="rounded-md bg-cyan-600 px-3 py-1 text-xs font-semibold text-white hover:bg-cyan-700">
+                              📁 Upload Quotations
+                            </button>
+                          ) : r.status === 'PO Pending' ? (
+                            <button onClick={() => navigate(`/review/${r._id}/po`)} className="rounded-md bg-sky-600 px-3 py-1 text-xs font-semibold text-white hover:bg-sky-700">
+                              🛒 Upload PO
+                            </button>
+                          ) : (
+                            <>
+                              <button onClick={() => navigate(`/review/${r._id}`)} className="rounded-md bg-navy-50 px-2.5 py-1 text-xs font-semibold text-navy-700 hover:bg-navy-100">Review</button>
+                              <button onClick={() => setModal({ type: 'approve', req: r })} className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">✓</button>
+                              <button onClick={() => setModal({ type: 'return', req: r })} className="rounded-md bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-100">↩</button>
+                              <button onClick={() => setModal({ type: 'reject', req: r })} className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100">✕</button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Workflow position ─────────────────────────────────────────────── */}

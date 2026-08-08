@@ -101,7 +101,7 @@ const findDeptManager = (deptId) => User.findOne({ role: ROLES.DEPARTMENT_MANAGE
 // GET /api/approval/queue
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getQueue = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, priority, category, search } = req.query;
+  const { page = 1, limit = 10, priority, category, search, status } = req.query;
   const step = getStep(req.user.role);
 
   if (!step) return res.status(200).json({ success: true, count: 0, total: 0, pages: 1, requirements: [] });
@@ -117,7 +117,16 @@ exports.getQueue = asyncHandler(async (req, res) => {
     ? { department: req.user.department }
     : {};
 
-  const filter = { status: { $in: step.actOn }, ...deptFilter };
+  // Allow filtering by specific status (must be within the role's actOn list)
+  const allowedStatuses = status
+    ? step.actOn.filter(s => s === status)
+    : step.actOn;
+
+  if (allowedStatuses.length === 0) {
+    return res.status(200).json({ success: true, count: 0, total: 0, pages: 1, requirements: [] });
+  }
+
+  const filter = { status: { $in: allowedStatuses }, ...deptFilter };
   if (priority) filter.priority = priority;
   if (category) filter.category = category;
   if (search) {
