@@ -21,7 +21,7 @@ const Info = ({ label, value }) => (
   </div>
 );
 
-const DocRow = ({ label, doc, signedNote, baseUrl }) => (
+const DocRow = ({ label, doc, signedNote }) => (
   <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
     <div className="flex items-center gap-2 min-w-0">
       <span className="text-xl">📄</span>
@@ -32,7 +32,7 @@ const DocRow = ({ label, doc, signedNote, baseUrl }) => (
       </div>
     </div>
     {doc
-      ? <button type="button" onClick={() => window.open(fileUrl(doc.path), `_blank`, `noopener,noreferrer`)} className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">??? View</button>
+      ? <button type="button" onClick={() => window.open(fileUrl(doc.path), '_blank', 'noopener,noreferrer')} className="inline-flex items-center gap-1 rounded-md bg-pink-600 px-3 py-1 text-xs font-semibold text-white hover:bg-pink-700">👁️ View</button>
       : <span className="text-xs text-red-500 font-semibold">Missing</span>
     }
   </div>
@@ -159,10 +159,10 @@ const InvoiceUpload = () => {
         <div className="space-y-2">
           <DocRow label="Purchase Order" doc={req.purchaseOrder?.document}
             signedNote={req.purchaseOrder?.signedAt ? `✍️ Signed by ${req.purchaseOrder.signedByName}` : null}
-            baseUrl={baseUrl} />
+            />
           <DocRow label="Goods Receipt Note" doc={req.grn?.document}
             signedNote={req.grn?.receivedAt ? `📦 Received ${new Date(req.grn.receivedAt).toLocaleDateString()}` : null}
-            baseUrl={baseUrl} />
+            />
         </div>
       </div>
 
