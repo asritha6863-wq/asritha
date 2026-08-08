@@ -230,8 +230,17 @@ const RequirementDetail = () => {
 
         {/* Sidebar: Timeline */}
         <div>
-          <Section title="Approval Timeline">
-            <ApprovalTimeline status={req.status} timeline={req.timeline || []} />
+          <Section title="Activity Log">
+            <div className="space-y-3 text-xs text-slate-600">
+              {(req.timeline || []).slice().reverse().map((t, i) => (
+                <div key={i} className="border-l-2 pl-3" style={{ borderColor: '#c13575' }}>
+                  <p className="font-semibold text-slate-800">{t.action}</p>
+                  {t.note && <p className="text-slate-500 italic mt-0.5">"{t.note}"</p>}
+                  <p className="text-slate-400 mt-0.5">{new Date(t.createdAt).toLocaleString()}</p>
+                </div>
+              ))}
+              {!req.timeline?.length && <p className="text-slate-400 italic">No activity yet.</p>}
+            </div>
           </Section>
         </div>
       </div>

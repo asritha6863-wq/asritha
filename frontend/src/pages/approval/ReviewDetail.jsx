@@ -1182,9 +1182,6 @@ const ReviewDetail = () => {
 
         {/* ── Sidebar ────────────────────────────────────────────────────── */}
         <div className="space-y-4">
-          <Section title="Approval Timeline">
-            <ApprovalTimeline status={req.status} timeline={req.timeline || []} />
-          </Section>
           {req.currentApprover && (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Awaiting</p>
