@@ -174,7 +174,7 @@ const MyRequirements = () => {
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-4">
+            <div className="border-t border-slate-100 px-4 py-4">
               <Pagination page={page} pages={data.pages} total={data.total} limit={10} onPageChange={setPage} />
             </div>
           </>

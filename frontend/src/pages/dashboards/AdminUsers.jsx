@@ -5,8 +5,7 @@ import Button from '../../components/common/Button';
 import TextField from '../../components/common/TextField';
 import Alert from '../../components/common/Alert';
 import { ALL_ROLES } from '../../constants/roles';
-
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+import { fileUrl } from '../../utils/fileUrl';
 
 const emptyForm = {
   employeeId: '', firstName: '', lastName: '',
@@ -17,7 +16,7 @@ const emptyForm = {
 const Avatar = ({ src, name, size = 'sm' }) => {
   const dim = size === 'lg' ? 'h-20 w-20 text-2xl' : 'h-9 w-9 text-sm';
   const initials = name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
-  const imgSrc = src ? (src.startsWith('http') ? src : `${BASE_URL}/${src}`) : null;
+  const imgSrc = src ? fileUrl(src) : null;
   if (imgSrc) {
     return (
       <img src={imgSrc} alt={name}
@@ -42,17 +41,25 @@ const AdminUsers = () => {
   const [editingId, setEditingId]       = useState(null);
   const [saving, setSaving]             = useState(false);
   const [search, setSearch]             = useState('');
+  const [page, setPage]                 = useState(1);
+  const [totalPages, setTotalPages]     = useState(1);
+  const [total, setTotal]               = useState(0);
+  const LIMIT = 15;
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({ defaultValues: emptyForm });
 
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (pg = page) => {
     setLoading(true); setError('');
     try {
-      const { data } = await api.get('/admin/users', { params: search ? { search } : {} });
+      const { data } = await api.get('/admin/users', {
+        params: { page: pg, limit: LIMIT, ...(search ? { search } : {}) }
+      });
       setUsers(data.users);
+      setTotal(data.total || 0);
+      setTotalPages(Math.ceil((data.total || 0) / LIMIT));
     } catch (err) { setError(err.message || 'Failed to load users.'); }
     finally { setLoading(false); }
-  }, [search]);
+  }, [search, page]);
 
   const loadDepartments = useCallback(async () => {
     try {
@@ -61,7 +68,8 @@ const AdminUsers = () => {
     } catch { /* graceful */ }
   }, []);
 
-  useEffect(() => { loadUsers(); loadDepartments(); }, [loadUsers, loadDepartments]);
+  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { loadUsers(page); loadDepartments(); }, [loadUsers, loadDepartments, page]);
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -231,6 +239,35 @@ const AdminUsers = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+          <p className="text-sm text-slate-500">
+            Showing <span className="font-medium">{(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)}</span> of <span className="font-medium">{total}</span> users
+          </p>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(p => p - 1)} disabled={page === 1}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+              ‹ Prev
+            </button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              const p = totalPages <= 7 ? i + 1 : i === 0 ? 1 : i === 6 ? totalPages : page - 3 + i;
+              if (p < 1 || p > totalPages) return null;
+              return (
+                <button key={p} onClick={() => setPage(p)}
+                  className={`min-w-[2rem] rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${p === page ? 'bg-pink-700 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                  {p}
+                </button>
+              );
+            })}
+            <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-40">
+              Next ›
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
