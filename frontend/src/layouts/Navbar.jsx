@@ -75,7 +75,7 @@ const Navbar = ({ onMenuClick }) => {
   useEffect(() => { setImgError(false); }, [user?.profileImage]);
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-white px-4 sm:px-6 shadow-brand-sm"
+    <header className="flex h-16 items-center justify-between border-b bg-white px-4 sm:px-6 shadow-brand-sm"
       style={{ borderColor: 'rgba(193,53,117,0.12)' }}>
       {/* Mobile menu button */}
       <button
