@@ -64,7 +64,7 @@ const Sidebar = ({ open, onClose }) => {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col px-4 py-6 transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto px-4 py-6 transition-transform lg:static lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ background: 'linear-gradient(180deg, #8a234f 0%, #6e1f41 50%, #3e0d24 100%)' }}
