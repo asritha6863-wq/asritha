@@ -1241,12 +1241,12 @@ exports.savePaymentRecord = asyncHandler(async (req, res, next) => {
     currency:      d.currency      || 'AED',
     notes:         d.notes         || '',
   };
-  // Optional payment receipt file
-  const f = (req.files && req.files[0]) || req.file;
-  if (f) {
+  // Optional payment receipt file — only set if actually uploaded
+  const f = (req.files && req.files.length > 0 && req.files[0]) || req.file;
+  if (f && f.path) {
     requirement.paymentRecord.document = {
       originalName: f.originalname,
-      filename:     f.filename,
+      filename:     f.filename || '',
       path:         f.path,
       mimeType:     f.mimetype,
       size:         f.size,

@@ -209,16 +209,17 @@ const ReviewDetail = () => {
   const handlePaymentDone = async () => {
     setActionLoading(true);
     try {
-      // If file uploaded, save payment record with file first
       if (paymentFile) {
+        // With file — send as FormData
         const form = new FormData();
-        form.append('paymentRef', `PAY-${req.requirementNumber}`);
-        form.append('paymentDate', new Date().toISOString().split('T')[0]);
+        form.append('paymentRef',    `PAY-${req.requirementNumber}`);
+        form.append('paymentDate',   new Date().toISOString().split('T')[0]);
         form.append('paymentMethod', 'Bank Transfer');
-        form.append('amountPaid', req.invoiceAmount || req.estimatedTotalPrice || 0);
-        form.append('file', paymentFile);
+        form.append('amountPaid',    String(req.invoiceAmount || req.estimatedTotalPrice || 0));
+        form.append('file',          paymentFile);
         await approvalService.savePaymentRecord(id, form);
       } else {
+        // No file — send plain JSON
         await approvalService.savePaymentRecord(id, {
           paymentRef:    `PAY-${req.requirementNumber}`,
           paymentDate:   new Date().toISOString().split('T')[0],
