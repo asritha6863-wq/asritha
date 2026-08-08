@@ -62,6 +62,8 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
 
     const [, , resourceType, publicIdRaw] = match;
     const cloudinary = require('../config/cloudinary');
+    const https = require('https');
+    const http  = require('http');
 
     const urlNoQuery  = publicIdRaw.split('?')[0];
     const ext         = (urlNoQuery.split('.').pop() || '').toLowerCase();
@@ -71,45 +73,30 @@ router.get('/serve', fileAuth, asyncHandler(async (req, res, next) => {
     const mime        = MIME_MAP[detectedExt] || 'application/pdf';
     const fname       = urlNoQuery.split('/').pop() || `file.${detectedExt}`;
 
-    try {
-      // Use cloudinary.api.resource to get a fresh delivery URL with auth
-      const resourceInfo = await cloudinary.api.resource(publicIdRaw, {
-        resource_type: resourceType,
-        type: 'upload',
-      });
+    // For image resource_type, public_id must NOT include the extension
+    // For raw resource_type, public_id includes the extension
+    const publicId = resourceType === 'image'
+      ? urlNoQuery.replace(/\.[^.]+$/, '')   // strip extension
+      : urlNoQuery;                           // keep extension
 
-      // Download using axios or https with the cloudinary credentials
-      const https = require('https');
-      const http  = require('http');
+    const privateUrl = cloudinary.utils.private_download_url(publicId, detectedExt, {
+      resource_type: resourceType,
+      type         : 'upload',
+      expires_at   : Math.floor(Date.now() / 1000) + 3600,
+      attachment   : false,
+    });
 
-      // Build authenticated URL using API key/secret as Basic auth
-      const authUrl = resourceInfo.secure_url;
-      const [cloudName, apiKey, apiSecret] = [
-        process.env.CLOUDINARY_URL.match(/cloudinary:\/\/(\d+):([^@]+)@(.+)/)?.slice(1) || []
-      ][0] || [];
-
-      // Fall back to private_download_url which uses API auth
-      const privateUrl = cloudinary.utils.private_download_url(publicIdRaw, detectedExt, {
-        resource_type: resourceType,
-        type: 'upload',
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-        attachment: false,
-      });
-
-      const lib = privateUrl.startsWith('https') ? https : http;
-      lib.get(privateUrl, (fileRes) => {
-        if (fileRes.statusCode >= 400) {
-          return next(new ErrorResponse(`Cloudinary delivery failed: ${fileRes.statusCode}`, 502));
-        }
-        res.setHeader('Content-Type', mime);
-        res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
-        Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
-        if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
-        fileRes.pipe(res);
-      }).on('error', (e) => next(new ErrorResponse('Download failed: ' + e.message, 502)));
-    } catch (err) {
-      return next(new ErrorResponse('Cloudinary error: ' + err.message, 502));
-    }
+    const lib = privateUrl.startsWith('https') ? https : http;
+    lib.get(privateUrl, (fileRes) => {
+      if (fileRes.statusCode >= 400) {
+        return next(new ErrorResponse(`Cloudinary delivery failed: ${fileRes.statusCode}`, 502));
+      }
+      res.setHeader('Content-Type', mime);
+      res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
+      Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
+      if (fileRes.headers['content-length']) res.setHeader('Content-Length', fileRes.headers['content-length']);
+      fileRes.pipe(res);
+    }).on('error', (e) => next(new ErrorResponse('Download failed: ' + e.message, 502)));
     return;
   }
 
