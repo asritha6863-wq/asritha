@@ -2,53 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-:root{
-  --color-primary: #0ea5e9; /* sky-500 */
-  --color-primary-dark: #0369a1; /* sky-800 */
-  --color-accent: #bfdbfe; /* sky-200 */
-  --color-bg-1: #e0f2fe;
-  --color-bg-2: #bae6fd;
+/* ── NiSHKA Brand Tokens ──────────────────────────────────────────────────── */
+:root {
+  --brand:        #c13575;   /* deep rose — primary */
+  --brand-dark:   #8a234f;   /* dark rose */
+  --brand-light:  #fde0ec;   /* blush — hover/accent bg */
+  --brand-pale:   #fdf0f5;   /* near-white pink — page bg */
+  --brand-border: rgba(193,53,117,0.15);
+  --text-dark:    #2d0a1a;
+  --text-mid:     #6e1f41;
 }
 
+/* ── Base ─────────────────────────────────────────────────────────────────── */
 @layer base {
   body {
     @apply text-slate-800 font-sans antialiased;
-    background: linear-gradient(135deg, var(--color-bg-1) 0%, var(--color-bg-2) 50%, var(--color-accent) 100%);
+    background-color: var(--brand-pale);
   }
+
+  h1, h2, h3, h4 { @apply font-display; }
 }
 
+/* ── Components ───────────────────────────────────────────────────────────── */
 @layer components {
+
+  /* Buttons */
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors;
-    background-color: var(--color-primary);
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5
+           text-sm font-semibold text-white shadow-brand-sm
+           transition-all duration-150 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed;
+    background-color: var(--brand);
   }
-  .btn-primary:hover { background-color: var(--color-primary-dark); }
-  .btn-primary:disabled { opacity: 0.6; }
+  .btn-primary:hover:not(:disabled) { background-color: var(--brand-dark); box-shadow: 0 4px 16px rgba(193,53,117,0.25); }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors;
-    border-color: rgba(14,165,233,0.12);
-    color: var(--color-primary-dark);
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border bg-white
+           px-5 py-2.5 text-sm font-semibold shadow-sm
+           transition-all duration-150 active:scale-[0.98] disabled:opacity-60;
+    border-color: var(--brand-border);
+    color: var(--brand);
+  }
+  .btn-secondary:hover:not(:disabled) { background-color: var(--brand-pale); border-color: var(--brand); }
+
+  /* Cards */
+  .card {
+    @apply rounded-2xl border bg-white shadow-sm;
+    border-color: var(--brand-border);
   }
 
+  /* Inputs */
   .input-field {
-    @apply block w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:outline-none;
-    border-color: rgba(14,165,233,0.12);
+    @apply block w-full rounded-xl border bg-white px-4 py-2.5
+           text-sm text-slate-900 shadow-sm
+           placeholder:text-slate-400
+           focus:outline-none transition-shadow duration-150;
+    border-color: rgba(193,53,117,0.18);
   }
   .input-field:focus {
-    box-shadow: 0 0 0 4px rgba(14,165,233,0.08);
-    border-color: var(--color-primary);
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(193,53,117,0.10);
+  }
+  .input-field:disabled, .input-field[readonly] {
+    @apply bg-slate-50 cursor-default opacity-80;
   }
 
+  /* Select inherits input-field */
+  select.input-field { appearance: auto; }
+
+  /* Labels */
   .field-label {
-    @apply mb-1.5 block text-sm font-medium text-slate-700;
+    @apply mb-1.5 block text-sm font-semibold text-slate-700;
   }
   .field-error {
-    @apply mt-1 text-xs text-red-700;
+    @apply mt-1 text-xs font-medium text-red-600;
   }
 
-  .card {
-    @apply rounded-xl border bg-white shadow-sm;
-    border-color: rgba(14,165,233,0.08);
+  /* Section headers inside cards */
+  .section-title {
+    @apply mb-4 border-b pb-2 text-xs font-bold uppercase tracking-widest;
+    border-color: var(--brand-border);
+    color: var(--brand);
   }
 }

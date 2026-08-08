@@ -4,52 +4,60 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary sky/teal palette
-        primary: {
-          50: '#e0f7ff',
-          100: '#bae6fd',
-          200: '#90cdfa',
-          300: '#61bff6',
-          400: '#2bb0f1',
-          500: '#0ea5e9', // primary
-          600: '#0891cf',
-          700: '#0369a1', // dark
-          800: '#014f73',
-          900: '#013047',
-        },
-        // Keep existing NiSHKA brand colors for compatibility
+        // NiSHKA Brand — Deep Rose on Blush Pink
         brand: {
-          50:  '#fdf2f6',
-          100: '#fbe8f0',
-          200: '#f7d1e2',
-          300: '#f0aac8',
-          400: '#e87aab',
-          500: '#d94f8c',
-          600: '#c73578',
-          700: '#a62860',
+          50:  '#fdf0f5',
+          100: '#fde0ec',
+          200: '#fbbdd6',
+          300: '#f78ab6',
+          400: '#ef5090',
+          500: '#e02070',   // mid rose
+          600: '#c13575',   // PRIMARY — logo color
+          700: '#a12860',
           800: '#8a234f',
           900: '#6e1f41',
           950: '#3e0d24',
         },
-        navy: {
-          50:  '#fdf2f6',
-          100: '#fbe8f0',
-          200: '#f7d1e2',
-          300: '#f0aac8',
-          400: '#e87aab',
-          500: '#d94f8c',
-          600: '#c73578',
-          700: '#a62860',
+        // Keep 'pink' as alias to brand for backward compat
+        pink: {
+          50:  '#fdf0f5',
+          100: '#fde0ec',
+          200: '#fbbdd6',
+          300: '#f78ab6',
+          400: '#ef5090',
+          500: '#e02070',
+          600: '#c13575',
+          700: '#a12860',
           800: '#8a234f',
           900: '#6e1f41',
         },
-        gold: {
-          500: '#d94f8c',
+        // Neutral navy kept for text/bg accents
+        navy: {
+          50:  '#f7f8fc',
+          100: '#eef0f8',
+          200: '#d5daf0',
+          300: '#b2bce4',
+          400: '#8997d4',
+          500: '#6374c4',
+          600: '#4a5bb5',
+          700: '#3d4d9e',
+          800: '#2d3a7a',
+          900: '#1e2756',
         },
       },
       fontFamily: {
         display: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans:    ['Inter',   'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        xl:  '0.875rem',
+        '2xl': '1.25rem',
+        '3xl': '1.75rem',
+      },
+      boxShadow: {
+        'brand-sm': '0 2px 8px rgba(193,53,117,0.10)',
+        'brand':    '0 4px 16px rgba(193,53,117,0.15)',
+        'brand-lg': '0 8px 32px rgba(193,53,117,0.20)',
       },
     },
   },

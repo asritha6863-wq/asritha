@@ -23,12 +23,12 @@ const ICONS = {
   clock:   'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
 };
 
-const linkBase = 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors';
+const linkBase = 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors';
 const linkClasses = ({ isActive }) =>
-  `${linkBase} ${isActive ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`;
+  `${linkBase} ${isActive ? 'bg-white/15 text-white font-semibold' : 'text-pink-200 hover:bg-white/10 hover:text-white'}`;
 
 const SectionLabel = ({ children }) => (
-  <p className="mt-5 mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+  <p className="mt-5 mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-pink-300/70">
     {children}
   </p>
 );
@@ -55,7 +55,7 @@ const Sidebar = ({ open, onClose }) => {
     return location.pathname === path && location.search.includes(qs);
   };
   const qLink = (path, qs) =>
-    `${linkBase} ${isExact(path, qs) ? 'bg-pink-700 text-white' : 'text-pink-100 hover:bg-pink-800 hover:text-white'}`;
+    `${linkBase} ${isExact(path, qs) ? 'bg-white/15 text-white font-semibold' : 'text-pink-200 hover:bg-white/10 hover:text-white'}`;
 
   return (
     <>
@@ -64,29 +64,28 @@ const Sidebar = ({ open, onClose }) => {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-pink-900 px-4 py-6 transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col px-4 py-6 transition-transform lg:static lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
+        style={{ background: 'linear-gradient(180deg, #8a234f 0%, #6e1f41 50%, #3e0d24 100%)' }}
       >
-        {/* Logo — NiSHKA */}
+        {/* Logo */}
         <div className="mb-8 flex items-center gap-3 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100">
-            {/* Peacock fan icon matching NiSHKA logo */}
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
             <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
-              <circle cx="20" cy="22" r="4" fill="#d94f8c"/>
-              <circle cx="20" cy="22" r="2" fill="#fbe8f0"/>
-              {/* Fan lines */}
+              <circle cx="20" cy="24" r="4.5" fill="#fde0ec"/>
+              <circle cx="20" cy="24" r="2" fill="#c13575"/>
               {[[-6,-10],[0,-12],[6,-10],[10,-6],[12,0],[10,6],[-10,-6],[-12,0],[-10,6]].map(([dx,dy],i)=>(
-                <line key={i} x1="20" y1="22" x2={20+dx} y2={22+dy} stroke="#d94f8c" strokeWidth="1.5" strokeLinecap="round"/>
-              ))}
-              {[[-6,-10],[0,-12],[6,-10],[10,-6],[12,0],[10,6],[-10,-6],[-12,0],[-10,6]].map(([dx,dy],i)=>(
-                <circle key={i} cx={20+dx} cy={22+dy} r="1.5" fill="#d94f8c"/>
+                <g key={i}>
+                  <line x1="20" y1="24" x2={20+dx} y2={24+dy} stroke="#fde0ec" strokeWidth="1.6" strokeLinecap="round"/>
+                  <circle cx={20+dx} cy={24+dy} r="1.8" fill="#fde0ec"/>
+                </g>
               ))}
             </svg>
           </div>
           <div>
-            <p className="font-display text-base font-bold text-white leading-tight tracking-wide">NiSHKA</p>
-            <p className="text-xs text-pink-300 leading-tight tracking-widest uppercase" style={{fontSize:'9px'}}>Momentous Jewellery</p>
+            <p className="font-display text-[15px] font-extrabold text-white leading-tight tracking-[0.12em]">NiSHKA</p>
+            <p className="text-pink-300/80 leading-tight tracking-[0.22em] uppercase" style={{fontSize:'8px', fontWeight:600}}>Momentous Jewellery</p>
           </div>
         </div>
 
@@ -279,8 +278,8 @@ const Sidebar = ({ open, onClose }) => {
           </NavLink>
         </nav>
 
-        <div className="mt-6 border-t border-pink-800 pt-4 px-2">
-          <p className="text-xs text-pink-400 text-center tracking-widest uppercase" style={{fontSize:'9px'}}>Procurement Management System</p>
+        <div className="mt-6 border-t border-white/10 pt-4 px-2">
+          <p className="text-center text-pink-300/50 tracking-widest uppercase" style={{fontSize:'8px'}}>Procurement Management System</p>
         </div>
       </aside>
     </>

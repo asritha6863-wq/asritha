@@ -75,10 +75,11 @@ const Navbar = ({ onMenuClick }) => {
   useEffect(() => { setImgError(false); }, [user?.profileImage]);
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-pink-100 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-white px-4 sm:px-6 shadow-brand-sm"
+      style={{ borderColor: 'rgba(193,53,117,0.12)' }}>
       {/* Mobile menu button */}
       <button
-        className="rounded-md p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
+        className="rounded-xl p-2 text-slate-500 hover:bg-pink-50 lg:hidden transition-colors"
         onClick={onMenuClick}
         aria-label="Open menu"
       >
@@ -91,12 +92,13 @@ const Navbar = ({ onMenuClick }) => {
         {/* Notification bell */}
         <button
           onClick={handleBellClick}
-          className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 transition-colors"
+          className="relative rounded-xl p-2 text-slate-500 hover:bg-pink-50 transition-colors"
           aria-label="Notifications"
         >
           <BellIcon className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white leading-none"
+              style={{ background: '#c13575' }}>
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -106,18 +108,19 @@ const Navbar = ({ onMenuClick }) => {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-pink-50"
+            className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-pink-50"
           >
-            {/* Avatar — shows photo if set, else initials */}
             {avatarSrc && !imgError ? (
               <img
                 src={avatarSrc}
                 alt={user?.firstName}
-                className="h-9 w-9 rounded-full object-cover border-2 border-pink-200 shrink-0"
+                className="h-9 w-9 rounded-full object-cover shrink-0"
+                style={{ border: '2px solid #c13575' }}
                 onError={() => setImgError(true)}
               />
             ) : (
-              <div className="h-9 w-9 rounded-full bg-pink-600 text-sm font-semibold text-white flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-full text-sm font-bold text-white flex items-center justify-center shrink-0"
+                style={{ background: 'linear-gradient(135deg,#c13575,#8a234f)' }}>
                 {initials || '—'}
               </div>
             )}
@@ -125,34 +128,36 @@ const Navbar = ({ onMenuClick }) => {
               <p className="text-sm font-semibold text-slate-800 leading-tight">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-xs text-slate-500 leading-tight">{user?.role}</p>
+              <p className="text-xs leading-tight" style={{ color: '#c13575' }}>{user?.role}</p>
             </div>
             <ChevronDown className="h-4 w-4 text-slate-400" />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+            <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl border bg-white py-1 shadow-brand"
+              style={{ borderColor: 'rgba(193,53,117,0.15)' }}>
               <button
                 onClick={() => { setMenuOpen(false); navigate('/profile'); }}
-                className="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                className="block w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-pink-50 transition-colors"
               >
                 My Profile
               </button>
               <button
                 onClick={() => { setMenuOpen(false); navigate('/notifications'); }}
-                className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-pink-50 transition-colors"
               >
                 Notifications
                 {unreadCount > 0 && (
-                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-600">
+                  <span className="rounded-full px-2 py-0.5 text-xs font-bold text-white"
+                    style={{ background: '#c13575' }}>
                     {unreadCount}
                   </span>
                 )}
               </button>
-              <div className="my-1 border-t border-slate-100" />
+              <div className="my-1 border-t" style={{ borderColor: 'rgba(193,53,117,0.10)' }} />
               <button
                 onClick={handleLogout}
-                className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 Log out
               </button>
